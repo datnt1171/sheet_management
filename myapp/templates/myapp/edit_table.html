@@ -12,6 +12,7 @@
 
     <div id="hot"></div>
 
+    <button onclick="mergeCells()">Merge Cells</button>
     <button onclick="saveTable()">Save Table</button>
 
     <script>
@@ -23,8 +24,46 @@
             data: tableData,
             rowHeaders: true,
             colHeaders: true,
-            licenseKey: 'non-commercial-and-evaluation'
+            licenseKey: 'non-commercial-and-evaluation',
+            mergeCells: [] // Initially no cells are merged
         });
+
+        function mergeCells() {
+            const data = hot.getData();
+            const mergeRanges = [];
+
+            // Function to find the range of cells to merge
+            function findMergeRange(startRow, col) {
+                let row = startRow;
+                while (row < data.length - 1 && (data[row + 1][col] === null || data[row + 1][col] === '')) {
+                    row++;
+                }
+                if (row > startRow) {
+                    return { row: startRow, col: col, rowspan: row - startRow + 1, colspan: 1 };
+                }
+                return null;
+            }
+
+            // Iterate through each column to find merge ranges
+            for (let col = 0; col < data[0].length; col++) {
+                for (let row = 0; row < data.length; row++) {
+                    if (data[row][col] !== null && data[row][col] !== '') {
+                        let mergeRange = findMergeRange(row, col);
+                        if (mergeRange) {
+                            mergeRanges.push(mergeRange);
+                            row = mergeRange.row + mergeRange.rowspan - 1; // Skip merged rows
+                        }
+                    }
+                }
+            }
+
+            // Apply the merge ranges
+            hot.updateSettings({
+                mergeCells: mergeRanges
+            });
+
+            console.log("Merge Ranges:", mergeRanges); // Debugging: Check the merge ranges
+        }
 
         function saveTable() {
             const tableData = hot.getData();
