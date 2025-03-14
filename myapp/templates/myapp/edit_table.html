@@ -6,6 +6,9 @@
     <title>Edit Table</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css">
     <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <h1>Edit Table: {{ table.name }}</h1>
@@ -14,6 +17,8 @@
 
     <button onclick="mergeCells()">Merge Cells</button>
     <button onclick="saveTable()">Save Table</button>
+    <button onclick="exportToExcel()">Export to Excel</button>
+    <button onclick="exportToPDF()">Export to PDF</button>
 
     <script>
         // Parse the table data from the server
@@ -61,8 +66,6 @@
             hot.updateSettings({
                 mergeCells: mergeRanges
             });
-
-            console.log("Merge Ranges:", mergeRanges); // Debugging: Check the merge ranges
         }
 
         function saveTable() {
@@ -77,6 +80,35 @@
             })
             .then(response => response.json())
             .then(data => alert(data.message || data.error));
+        }
+
+        function exportToExcel() {
+            const data = hot.getData();
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+
+            // Apply merged cells
+            const mergeRanges = hot.getPlugin('mergeCells').mergedCellsCollection.mergedCells;
+            ws['!merges'] = mergeRanges.map(range => ({
+                s: { r: range.row, c: range.col },
+                e: { r: range.row + range.rowspan - 1, c: range.col + range.colspan - 1 }
+            }));
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+            XLSX.writeFile(wb, 'table.xlsx');
+        }
+
+        function exportToPDF() {
+            html2canvas(document.getElementById('hot')).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save('table.pdf');
+            });
         }
     </script>
 </body>
