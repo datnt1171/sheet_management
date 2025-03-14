@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15
+    env_file:
+      - .env
+    container_name: sheet
+    environment:
+      POSTGRES_USER: ${SHEET_USER}
+      POSTGRES_PASSWORD: ${SHEET_PASSWORD}
+      POSTGRES_DB: ${SHEET_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+    - "5432:5432"
+volumes:
+  postgres_data:
