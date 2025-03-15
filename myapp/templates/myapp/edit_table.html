@@ -17,6 +17,7 @@
 
     <button onclick="mergeCells()">Merge Cells</button>
     <button onclick="saveTable()">Save Table</button>
+    <button onclick="saveTableWithTempName()">Save Table with Temp Name</button>
     <button onclick="exportToExcel()">Export to Excel</button>
     <button onclick="exportToPDF()">Export to PDF</button>
 
@@ -80,6 +81,37 @@
             })
             .then(response => response.json())
             .then(data => alert(data.message || data.error));
+        }
+
+        function saveTableWithTempName() {
+            const tableData = hot.getData();
+            const newTableName = '{{ table.name }}_temp'; // Append "temp" to the current table name
+
+            fetch('/save-with-temp-name/{{ table.id }}/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    name: newTableName,
+                    data: tableData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Table saved with temp name successfully!');
+                    // Optionally, redirect to the new table's edit page
+                    window.location.href = `/edit/${data.new_table_id}/`;
+                } else {
+                    alert(data.error || 'Failed to save table with temp name.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving the table.');
+            });
         }
 
         function exportToExcel() {
