@@ -10,27 +10,39 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        #hot th{
-            white-space: normal;
-        }
-        .htRowHeader {
-            font-size: 11px;
+        .ht_clone_top th {
+            border: 1px solid #000000 !important;
+            color: #000;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: normal; /* Ensure text wraps correctly */
         }
         .htCore td {
-            font-size: 11px; /* Adjust this size as needed */
+            font-size: 13px;
+            color: #000000;
+            border: 1px solid #000000 !important;
+        }
+        /* Print Styles */
+        @media print {
+            /* Hide all buttons during printing */
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
+
+
 </head>
 <body>
     <h1>Edit Table: {{ table.name }}</h1>
     <div id="hot"></div>
 
 
-    <button onclick="mergeCells()">Merge Cells</button>
-    <button onclick="saveTable()">Save Table</button>
-    <button onclick="saveTableWithTempName()">Save Table with Temp Name</button>
-    <button onclick="exportToExcel()">Export to Excel</button>
-    <button onclick="exportToPDF()">Export to PDF</button>
+    <button class="no-print" onclick="mergeCells()">Merge Cells</button>
+    <button class="no-print" onclick="saveTable()">Save Table</button>
+    <button class="no-print" onclick="saveTableWithTempName()">Save Table with Temp Name</button>
+    <button class="no-print" onclick="exportToExcel()">Export to Excel</button>
+    <button class="no-print" id="printBtn">Print Table</button>
 
     <script>
         // Dictionary containing product details
@@ -62,42 +74,42 @@
 };
 
         // Parse the table data from the server
-        const WidthUnit = 37 / 4.11; // 37 is the width of 1st col in hot, 4.11 is width in excel
+        const WidthUnit = 38 / 4.11; // 37 is the width of 1st col in hot, 4.11 is width in excel
         const tableData = JSON.parse('{{ table_data_json|escapejs }}');
 
         const container = document.getElementById('hot');
         const hot = new Handsontable(container, {
             data: tableData,
             contextMenu: true,
-            rowHeaders: true,
+            //rowHeaders: true,
             minRows: 20,
             rowHeights: true,
-            manualRowResize: true,
             height: 'auto',
+            manualRowResize: true,
             colHeaders: [
                 "Step", "Step Name", "Viscosity & Wet Mill Thickness (EN)", "Viscosity & Wet Mill Thickness (VN)", 
                 "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
                 "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
                 "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign"
             ],
-            colWidths: [WidthUnit * 4.11,
-                        WidthUnit * 6.89, 
-                        WidthUnit * 11.78, 
-                        WidthUnit * 11.78, 
-                        WidthUnit * 11.78, 
-                        WidthUnit * 11.78, 
-                        WidthUnit * 4.22, 
-                        WidthUnit * 8.78, 
-                        WidthUnit * 8.78, 
-                        WidthUnit * 10.22, 
-                        WidthUnit * 11.67, 
-                        WidthUnit * 4.89, 
-                        WidthUnit * 4.89, 
-                        WidthUnit * 4.89, 
-                        WidthUnit * 12.67, 
-                        WidthUnit * 12.78, 
-                        WidthUnit * 6.56, 
-                        WidthUnit * 8.56],
+            colWidths: [WidthUnit * 4.11, // Step
+                        WidthUnit * 6.89, // Step Name
+                        WidthUnit * 13, // Viscosity & Wet Mill Thickness (EN)
+                        WidthUnit * 13, // Viscosity & Wet Mill Thickness (VN)
+                        WidthUnit * 13, // SPEC EN
+                        WidthUnit * 13, // SPEC VN
+                        WidthUnit * 5, // Hold Time (min)
+                        WidthUnit * 8.78, // Chemical Mixing Code
+                        WidthUnit * 9.5, // Consumption (per m2)
+                        WidthUnit * 10.22, // Material Code
+                        WidthUnit * 11.67, // Material Name
+                        WidthUnit * 4.89, // Ratio
+                        WidthUnit * 4.89, // Qty (per m2)
+                        WidthUnit * 4.89, // Unit
+                        WidthUnit * 12.67, // Check Result
+                        WidthUnit * 12.78, // Correct Action
+                        WidthUnit * 6.56, // TE-1's Sign
+                        WidthUnit * 8.56], // Customer's Sign
             columns: [
                 { type: 'text' }, // Step
                 { 
@@ -236,18 +248,13 @@
             XLSX.writeFile(wb, 'table.xlsx');
         }
 
-        function exportToPDF() {
-            html2canvas(document.getElementById('hot')).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jspdf.jsPDF({
-                    orientation: 'landscape',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height]
-                });
-                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                pdf.save('table.pdf');
-            });
+        function printTable() {
+            window.print();
         }
+
+        // Attach event listener to Print button
+        document.getElementById('printBtn').addEventListener('click', printTable);
     </script>
+    
 </body>
 </html>
