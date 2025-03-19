@@ -9,11 +9,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        #hot th{
+            white-space: normal;
+        }
+        .htRowHeader {
+            font-size: 11px;
+        }
+        .htCore td {
+            font-size: 11px; /* Adjust this size as needed */
+        }
+    </style>
 </head>
 <body>
     <h1>Edit Table: {{ table.name }}</h1>
-
     <div id="hot"></div>
+
 
     <button onclick="mergeCells()">Merge Cells</button>
     <button onclick="saveTable()">Save Table</button>
@@ -22,26 +33,123 @@
     <button onclick="exportToPDF()">Export to PDF</button>
 
     <script>
+        // Dictionary containing product details
+        const productData = {
+    "Apply W/B cream powder by brush\n(Phun W/B màu kem bằng cọ)": {
+        "viscosity_en": null,
+        "viscosity_vn": null,
+        "SPEC_EN": "Apply W/B white powder by brush 4\"in overall surface then follow by brush 2/2\"in to make powder evenly apply and then let it dry for at least 1 hours prior to dry sandinh highlights through",
+        "SPEC_VN": "Sửu dụng sơn nước W/B bằng cọ 4\"in toàn bộ bề mặt, sau đó dùng cọ 2/2\"in tải đều lại để khô 1 giờ trước khi chà nhám hai lai",
+        "hold_time": 60,
+        "consumption": 150.0
+    },
+    "Dry brush glaze\n(Đánh cọ glaze)": {
+        "viscosity_en": null,
+        "viscosity_vn": null,
+        "SPEC_EN": "Dry brush glaze overall surface then let dry for at least 15 minutes prior to next steps",
+        "SPEC_VN": "Đánh cọ glaze toàn bộ bề mặt để khô 15 phút trước khi làm bước kế tiếp",
+        "hold_time": 15,
+        "consumption": 50.0
+    },
+    "Dry sanding carefully\n(Chà nhám cẩn thận)": {
+        "viscosity_en": null,
+        "viscosity_vn": null,
+        "SPEC_EN": "Dry sanding carefully #320-Grit overall surface . White wood should always be freshly sanded before start finishing, and must be free from grease, oil or other contaminatic, please reject white wood with any defects",
+        "SPEC_VN": "Chà nhám cẩn thận #320-Grit. Kiểm tra bề mặt chà nhám nếu bị dính dầu hoặc dính dơ thì phải làm sạch bề mặt trước khi làm bước kế tiếp",
+        "hold_time": 15,
+        "consumption": 0.125
+    }
+};
+
         // Parse the table data from the server
+        const WidthUnit = 37 / 4.11; // 37 is the width of 1st col in hot, 4.11 is width in excel
         const tableData = JSON.parse('{{ table_data_json|escapejs }}');
 
         const container = document.getElementById('hot');
         const hot = new Handsontable(container, {
             data: tableData,
+            contextMenu: true,
             rowHeaders: true,
-            colHeaders: true,
+            minRows: 20,
+            rowHeights: true,
+            manualRowResize: true,
+            height: 'auto',
+            colHeaders: [
+                "Step", "Step Name", "Viscosity & Wet Mill Thickness (EN)", "Viscosity & Wet Mill Thickness (VN)", 
+                "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
+                "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
+                "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign"
+            ],
+            colWidths: [WidthUnit * 4.11,
+                        WidthUnit * 6.89, 
+                        WidthUnit * 11.78, 
+                        WidthUnit * 11.78, 
+                        WidthUnit * 11.78, 
+                        WidthUnit * 11.78, 
+                        WidthUnit * 4.22, 
+                        WidthUnit * 8.78, 
+                        WidthUnit * 8.78, 
+                        WidthUnit * 10.22, 
+                        WidthUnit * 11.67, 
+                        WidthUnit * 4.89, 
+                        WidthUnit * 4.89, 
+                        WidthUnit * 4.89, 
+                        WidthUnit * 12.67, 
+                        WidthUnit * 12.78, 
+                        WidthUnit * 6.56, 
+                        WidthUnit * 8.56],
+            columns: [
+                { type: 'text' }, // Step
+                { 
+                    type: 'dropdown', 
+                    source: Object.keys(productData),
+                    allowEmpty: false 
+                }, // Step Name (Dropdown)
+                { type: 'text'}, // Viscosity EN
+                { type: 'text'}, // Viscosity VN
+                { type: 'text'}, // SPEC EN
+                { type: 'text'}, // SPEC VN
+                { type: 'numeric'}, // Hold Time
+                { type: 'text'}, // Chemical Mixing Code
+                { type: 'numeric'}, // Consumption
+                { type: 'text' }, // Material Code
+                { type: 'text' }, // Material Name
+                { type: 'numeric' }, // Ratio
+                { type: 'numeric' }, // Qty
+                { type: 'text' }, // Unit
+                { type: 'text' }, // Check Result
+                { type: 'text' }, // Correct Action
+                { type: 'text' }, // TE-1 Sign
+                { type: 'text' }  // Customer Sign
+            ],
+            mergeCells: [], // Initially no cells are merged
             licenseKey: 'non-commercial-and-evaluation',
-            mergeCells: [] // Initially no cells are merged
+        });
+
+        // Function to update row based on Step Name (Column 2)
+        hot.addHook('afterChange', function(changes) {
+            if (!changes) return;
+
+            changes.forEach(([row, prop, oldVal, newVal]) => {
+                if (prop === 1 && productData[newVal]) { // Step Name changed
+                    const product = productData[newVal];
+                    hot.setDataAtRowProp(row, 2, product.viscosity_en);
+                    hot.setDataAtRowProp(row, 3, product.viscosity_vn);
+                    hot.setDataAtRowProp(row, 4, product.SPEC_EN);
+                    hot.setDataAtRowProp(row, 5, product.SPEC_VN);
+                    hot.setDataAtRowProp(row, 6, product.hold_time);
+                    hot.setDataAtRowProp(row, 8, product.consumption);
+                }
+            });
         });
 
         function mergeCells() {
             const data = hot.getData();
             const mergeRanges = [];
 
-            // Function to find the range of cells to merge
             function findMergeRange(startRow, col) {
                 let row = startRow;
-                while (row < data.length - 1 && (data[row + 1][col] === null || data[row + 1][col] === '')) {
+                while (row < data.length - 1 && (data[row + 1][0] === null || data[row + 1][0] === '')) { // Check only column 1 for merging condition
                     row++;
                 }
                 if (row > startRow) {
@@ -50,24 +158,23 @@
                 return null;
             }
 
-            // Iterate through each column to find merge ranges
-            for (let col = 0; col < data[0].length; col++) {
-                for (let row = 0; row < data.length; row++) {
-                    if (data[row][col] !== null && data[row][col] !== '') {
+            for (let row = 0; row < data.length; row++) {
+                if (data[row][0] !== null && data[row][0] !== '') { // Check column 1 (index 0)
+                    for (let col = 0; col <= 8; col++) { // Merge cells from col1 to col9
                         let mergeRange = findMergeRange(row, col);
                         if (mergeRange) {
                             mergeRanges.push(mergeRange);
-                            row = mergeRange.row + mergeRange.rowspan - 1; // Skip merged rows
                         }
                     }
+                    row += mergeRanges.length > 0 ? mergeRanges[mergeRanges.length - 1].rowspan - 1 : 0; // Skip merged rows
                 }
             }
 
-            // Apply the merge ranges
             hot.updateSettings({
                 mergeCells: mergeRanges
             });
         }
+
 
         function saveTable() {
             const tableData = hot.getData();
@@ -85,7 +192,7 @@
 
         function saveTableWithTempName() {
             const tableData = hot.getData();
-            const newTableName = '{{ table.name }}_temp'; // Append "temp" to the current table name
+            const newTableName = '{{ table.name }}_temp';
 
             fetch('/save-with-temp-name/{{ table.id }}/', {
                 method: 'POST',
@@ -102,7 +209,6 @@
             .then(data => {
                 if (data.success) {
                     alert('Table saved with temp name successfully!');
-                    // Optionally, redirect to the new table's edit page
                     window.location.href = `/edit/${data.new_table_id}/`;
                 } else {
                     alert(data.error || 'Failed to save table with temp name.');
