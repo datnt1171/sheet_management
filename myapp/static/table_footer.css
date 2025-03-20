@@ -1,0 +1,26 @@
+/* Set the width for each column in the table */
+#custom-footer .table-footer {
+    border-collapse: collapse; /* Remove spacing between borders */
+    height: 150px;
+}
+#custom-footer .table-footer td {
+    font-size: 16px;
+    border : 2px solid #000;
+    text-align: center;
+    vertical-align: bottom;
+}
+
+/* Column 1 */
+#custom-footer .table-footer td:nth-child(1) {
+    width: 400px;
+}
+
+/* Column 2 */
+#custom-footer .table-footer td:nth-child(2) {
+    width: 700px;
+}
+
+/* Column 3 */
+#custom-footer .table-footer td:nth-child(3) {
+    width: 400px;
+}

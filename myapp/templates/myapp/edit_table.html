@@ -13,15 +13,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="{% static 'hot.css' %}">
     <link rel="stylesheet" href="{% static 'table_header.css' %}">
+    <link rel="stylesheet" href="{% static 'table_footer.css' %}">
 
 
 </head>
 <body>
 
     <div id="custom-header">
-        <table border="1" class="table-header">
+        <table class="table-header">
             <tr>
-                <th colspan="6" style="text-align: center;">
+                <th colspan="6">
                     <input type="text" id="table_name" value="{{ table.name }}" style="border: none; text-align: center; font-weight: bold; font-size: 18px; width: 99%;">
                 </th>
             </tr>
@@ -66,42 +67,36 @@
     
     
     <div id="hot"></div>
-
+    
+    <div id="custom-footer">
+        <table class="table-footer">
+            <tr>
+                <td><strong>PREPARED BY: FINISHING SPECIALIST</strong><br>ROBERTO WAMINAL</td>
+                <td><strong>APPROVED BY: PAINT SUPPLIER</strong><br>TE-1</td>
+                <td><strong>APPROVED BY: FINISHING MANAGER</strong><br>HÀ THỊ TRÂM ANH</td>
+            </tr>
+        </table>
+    </div>
 
     <button class="no-print" onclick="mergeCells()">Merge Cells</button>
     <button class="no-print" onclick="saveTable()">Save Table</button>
     <button class="no-print" onclick="saveTableWithTempName()">Save Table with Temp Name</button>
     <button class="no-print" onclick="exportToExcel()">Export to Excel</button>
     <button class="no-print" id="printBtn">Print Table</button>
-
+    <button class="no-print" onclick="toggleRowIndex()">Toggle</button>
     <script>
         // Dictionary containing product details
-        const productData = {
-    "Apply W/B cream powder by brush\n(Phun W/B màu kem bằng cọ)": {
-        "viscosity_en": null,
-        "viscosity_vn": null,
-        "SPEC_EN": "Apply W/B white powder by brush 4\"in overall surface then follow by brush 2/2\"in to make powder evenly apply and then let it dry for at least 1 hours prior to dry sandinh highlights through",
-        "SPEC_VN": "Sửu dụng sơn nước W/B bằng cọ 4\"in toàn bộ bề mặt, sau đó dùng cọ 2/2\"in tải đều lại để khô 1 giờ trước khi chà nhám hai lai",
-        "hold_time": 60,
-        "consumption": 150.0
-    },
-    "Dry brush glaze\n(Đánh cọ glaze)": {
-        "viscosity_en": null,
-        "viscosity_vn": null,
-        "SPEC_EN": "Dry brush glaze overall surface then let dry for at least 15 minutes prior to next steps",
-        "SPEC_VN": "Đánh cọ glaze toàn bộ bề mặt để khô 15 phút trước khi làm bước kế tiếp",
-        "hold_time": 15,
-        "consumption": 50.0
-    },
-    "Dry sanding carefully\n(Chà nhám cẩn thận)": {
-        "viscosity_en": null,
-        "viscosity_vn": null,
-        "SPEC_EN": "Dry sanding carefully #320-Grit overall surface . White wood should always be freshly sanded before start finishing, and must be free from grease, oil or other contaminatic, please reject white wood with any defects",
-        "SPEC_VN": "Chà nhám cẩn thận #320-Grit. Kiểm tra bề mặt chà nhám nếu bị dính dầu hoặc dính dơ thì phải làm sạch bề mặt trước khi làm bước kế tiếp",
-        "hold_time": 15,
-        "consumption": 0.125
-    }
-};
+        async function loadProductData() {
+            try {
+                const response = await fetch('/static/steps.json'); // Update with the correct path
+                if (!response.ok) throw new Error("Failed to load steps.json");
+                
+                const productData = await response.json();
+                initHandsontable(productData);
+            } catch (error) {
+                console.error("Error loading product data:", error);
+            }
+        }
 
         // Parse the table data from the server
         const WidthUnit = 38 / 4.11; // 37 is the width of 1st col in hot, 4.11 is width in excel
@@ -111,7 +106,6 @@
         const hot = new Handsontable(container, {
             data: tableData,
             contextMenu: true,
-            //rowHeaders: true,
             minRows: 20,
             rowHeights: true,
             height: 'auto',
@@ -167,7 +161,7 @@
             mergeCells: [], // Initially no cells are merged
             licenseKey: 'non-commercial-and-evaluation',
         });
-
+        
         // Function to update row based on Step Name (Column 2)
         hot.addHook('afterChange', function(changes) {
             if (!changes) return;
@@ -217,7 +211,11 @@
             });
         }
 
-
+        function toggleRowIndex() {
+            hot.updateSettings({
+                rowHeaders: hot.getSettings().rowHeaders ? false : true
+            });
+        }
         function saveTable() {
             const tableData = hot.getData();
             fetch('/save/{{ table.id }}/', {
@@ -284,6 +282,7 @@
 
         // Attach event listener to Print button
         document.getElementById('printBtn').addEventListener('click', printTable);
+        
     </script>
     
 </body>
