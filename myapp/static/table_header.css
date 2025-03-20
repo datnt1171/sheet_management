@@ -1,0 +1,41 @@
+/* Set the width for each column in the table */
+.my-table {
+    width: 100%; /* Ensure the table takes full width */
+    border-collapse: collapse; /* Remove spacing between borders */
+}
+#custom-header .table-header td {
+    font-size: 13px; /* Add padding to the cells */
+}
+/* Column 1 */
+#custom-header .table-header td:nth-child(1) {
+    width: 215px;
+}
+
+/* Column 2 */
+#custom-header .table-header td:nth-child(2) {
+    width: 114px;
+}
+
+/* Column 3 */
+#custom-header .table-header td:nth-child(3) {
+    width: 281px;
+}
+
+/* Column 4 */
+#custom-header .table-header td:nth-child(4) {
+    width: 162px;
+}
+
+/* Column 5 */
+#custom-header .table-header td:nth-child(5) {
+    width: 333px;
+}
+
+/* Column 6 */
+#custom-header .table-header td:nth-child(6) {
+    width: 350px;
+}
+
+/* #custom-header input, textarea {
+    border: none;
+} */

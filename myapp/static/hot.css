@@ -1,0 +1,25 @@
+.ht_clone_top th {
+    border: 1px solid #000000 !important;
+    color: #000;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: normal; /* Ensure text wraps correctly */
+}
+.htCore td {
+    font-size: 13px;
+    color: #000000;
+    border: 1px solid #000000 !important;
+}
+/* Print Styles */
+@media print {
+    /* Hide all buttons during printing */
+    .no-print {
+        display: none !important;
+    }
+}
+.no-border input {
+    border: none;
+    background: transparent; 
+    font-size: 12px;
+    width: 90%;
+}

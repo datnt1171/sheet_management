@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,32 +11,60 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        .ht_clone_top th {
-            border: 1px solid #000000 !important;
-            color: #000;
-            font-size: 13px;
-            font-weight: bold;
-            white-space: normal; /* Ensure text wraps correctly */
-        }
-        .htCore td {
-            font-size: 13px;
-            color: #000000;
-            border: 1px solid #000000 !important;
-        }
-        /* Print Styles */
-        @media print {
-            /* Hide all buttons during printing */
-            .no-print {
-                display: none !important;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'hot.css' %}">
+    <link rel="stylesheet" href="{% static 'table_header.css' %}">
 
 
 </head>
 <body>
-    <h1>Edit Table: {{ table.name }}</h1>
+
+    <div id="custom-header">
+        <table border="1" class="table-header">
+            <tr>
+                <th colspan="6" style="text-align: center;">
+                    <input type="text" id="table_name" value="{{ table.name }}" style="border: none; text-align: center; font-weight: bold; font-size: 18px; width: 99%;">
+                </th>
+            </tr>
+            <tr>
+                <td>
+                    <strong>Name:</strong> <input type="text" id="name" required > <br>
+                    <strong>Sheen:</strong> <input type="text" id="sheen" required> <br>
+                    <strong>DFT:</strong> <input type="text" id="dft" required> <br>
+                    <strong>Chemical:</strong> <input type="text" id="chemical" required style="width: 130px"> <br>
+                    <strong>Substrate:</strong> <input type="text" id="substrate" required style="width: 130px"> <br>
+                    <strong>Grain Filling:</strong> <input type="text" id="grain_filling" required style="width: 110px"> <br>
+                    <strong>Developed/Duplicated by:</strong> <input type="text" id="developer" required >
+                </td>
+                <td>
+                    <strong>Chemical waste:</strong> <br> <textarea rows="1" cols="10"></textarea> <br>
+                    <strong>Conveyor speed:</strong> <br> <textarea rows="3" cols="10"></textarea>
+                </td>
+                <td>
+                    <strong>1.</strong> "Wood substrate before finishing process should be below 10% MC" <br>
+                    <strong>2.</strong> "Last sanding on white wood should be grit #240" <br>
+                    <strong>3.</strong> "White wood surface must be free from grease, oil, or other contamination. Please reject white wood with any defects."
+                </td>
+                <td>
+                    <strong>With panel test:</strong> <input type="checkbox"> (Có mẫu test chuyền) <br>
+                    <strong>No panel test:</strong> <input type="checkbox"> (Không có mẫu test chuyền) <br>
+                    <strong>Testing:</strong> <input type="checkbox"> <br>
+                    <strong>Chemical Yellowing:</strong> <input type="checkbox">
+                </td>
+                <td>
+                    <strong>4.</strong> "Always ask TE-1 for advice in case of changing process mixing ratio, application amount, drying time, application method, must get approval form..." <br>
+                    <strong>5.</strong> "Strictly follow the process, always refer to the PCP" <br>
+                    <strong>6.</strong> "Viscosity reading using NK2 cup standard."
+                </td>
+                <td style="text-align: center;">
+                    <strong>DAILY CHECKLIST</strong> <br>
+                    (Kiểm tra hằng ngày) <br>
+                    <strong>Date:</strong>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    
     <div id="hot"></div>
 
 
@@ -106,8 +136,8 @@
                         WidthUnit * 4.89, // Ratio
                         WidthUnit * 4.89, // Qty (per m2)
                         WidthUnit * 4.89, // Unit
-                        WidthUnit * 12.67, // Check Result
-                        WidthUnit * 12.78, // Correct Action
+                        WidthUnit * 12, // Check Result
+                        WidthUnit * 12, // Correct Action
                         WidthUnit * 6.56, // TE-1's Sign
                         WidthUnit * 8.56], // Customer's Sign
             columns: [
