@@ -16,6 +16,9 @@
     .no-print {
         display: none !important;
     }
+    htAutocompleteArrow {
+        display: none !important;
+    }
 }
 ::-webkit-scrollbar {
     @media print {
@@ -28,4 +31,8 @@
     background: transparent; 
     font-size: 12px;
     width: 90%;
+}
+
+.htDropdownMenu .htAutocompleteArrow {
+    display: none !important;
 }

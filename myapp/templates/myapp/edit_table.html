@@ -2,221 +2,95 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Table</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="{% static 'hot.css' %}">
-    <link rel="stylesheet" href="{% static 'table_header.css' %}">
-    <link rel="stylesheet" href="{% static 'table_footer.css' %}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Edit Table</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <link rel="stylesheet" href="{% static 'hot.css' %}">
+        <link rel="stylesheet" href="{% static 'table_header.css' %}">
+        <link rel="stylesheet" href="{% static 'table_footer.css' %}">
 
 
-</head>
-<body>
-
-    <div id="custom-header">
-        <table class="table-header">
-            <tr>
-                <th colspan="6">
-                    <input type="text" id="table_name" value="{{ table.name }}" style="border: none; text-align: center; font-weight: bold; font-size: 18px; width: 99%;">
-                </th>
-            </tr>
-            <tr>
-                <td>
-                    <strong>Name:</strong> <input type="text" id="name" required > <br>
-                    <strong>Sheen:</strong> <input type="text" id="sheen" required> <br>
-                    <strong>DFT:</strong> <input type="text" id="dft" required> <br>
-                    <strong>Chemical:</strong> <input type="text" id="chemical" required style="width: 130px"> <br>
-                    <strong>Substrate:</strong> <input type="text" id="substrate" required style="width: 130px"> <br>
-                    <strong>Grain Filling:</strong> <input type="text" id="grain_filling" required style="width: 110px"> <br>
-                    <strong>Developed/Duplicated by:</strong> <input type="text" id="developer" required >
-                </td>
-                <td>
-                    <strong>Chemical waste:</strong> <br> <textarea rows="1" cols="10"></textarea> <br>
-                    <strong>Conveyor speed:</strong> <br> <textarea rows="3" cols="10"></textarea>
-                </td>
-                <td>
-                    <strong>1.</strong> "Wood substrate before finishing process should be below 10% MC" <br>
-                    <strong>2.</strong> "Last sanding on white wood should be grit #240" <br>
-                    <strong>3.</strong> "White wood surface must be free from grease, oil, or other contamination. Please reject white wood with any defects."
-                </td>
-                <td>
-                    <strong>With panel test:</strong> <input type="checkbox"> (Có mẫu test chuyền) <br>
-                    <strong>No panel test:</strong> <input type="checkbox"> (Không có mẫu test chuyền) <br>
-                    <strong>Testing:</strong> <input type="checkbox"> <br>
-                    <strong>Chemical Yellowing:</strong> <input type="checkbox">
-                </td>
-                <td>
-                    <strong>4.</strong> "Always ask TE-1 for advice in case of changing process mixing ratio, application amount, drying time, application method, must get approval form..." <br>
-                    <strong>5.</strong> "Strictly follow the process, always refer to the PCP" <br>
-                    <strong>6.</strong> "Viscosity reading using NK2 cup standard."
-                </td>
-                <td style="text-align: center;">
-                    <strong>DAILY CHECKLIST</strong> <br>
-                    (Kiểm tra hằng ngày) <br>
-                    <strong>Date:</strong>
-                </td>
-            </tr>
-        </table>
-    </div>
-    
-    
-    <div id="hot"></div>
-    
-    <div id="custom-footer">
-        <table class="table-footer">
-            <tr>
-                <td><strong>PREPARED BY: FINISHING SPECIALIST</strong><br>ROBERTO WAMINAL</td>
-                <td><strong>APPROVED BY: PAINT SUPPLIER</strong><br>TE-1</td>
-                <td><strong>APPROVED BY: FINISHING MANAGER</strong><br>HÀ THỊ TRÂM ANH</td>
-            </tr>
-        </table>
-    </div>
-
-    <button class="no-print" onclick="mergeCells()">Merge Cells</button>
-    <button class="no-print" onclick="saveTable()">Save Table</button>
-    <button class="no-print" onclick="saveTableWithTempName()">Save Table with Temp Name</button>
-    <button class="no-print" onclick="exportToExcel()">Export to Excel</button>
-    <button class="no-print" id="printBtn">Print Table</button>
-    <button class="no-print" onclick="toggleRowIndex()">Toggle</button>
-    <script>
-        // Dictionary containing product details
-        async function loadProductData() {
-            try {
-                const response = await fetch('/static/steps.json'); // Update with the correct path
-                if (!response.ok) throw new Error("Failed to load steps.json");
-                
-                const productData = await response.json();
-                initHandsontable(productData);
-            } catch (error) {
-                console.error("Error loading product data:", error);
-            }
-        }
-
-        // Parse the table data from the server
-        const WidthUnit = 38 / 4.11; // 37 is the width of 1st col in hot, 4.11 is width in excel
-        const tableData = JSON.parse('{{ table_data_json|escapejs }}');
-
-        const container = document.getElementById('hot');
-        const hot = new Handsontable(container, {
-            data: tableData,
-            contextMenu: true,
-            minRows: 20,
-            rowHeights: true,
-            height: 'auto',
-            manualRowResize: true,
-            colHeaders: [
-                "Step", "Step Name", "Viscosity & Wet Mill Thickness (EN)", "Viscosity & Wet Mill Thickness (VN)", 
-                "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
-                "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
-                "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign"
-            ],
-            colWidths: [WidthUnit * 4.11, // Step
-                        WidthUnit * 6.89, // Step Name
-                        WidthUnit * 13, // Viscosity & Wet Mill Thickness (EN)
-                        WidthUnit * 13, // Viscosity & Wet Mill Thickness (VN)
-                        WidthUnit * 13, // SPEC EN
-                        WidthUnit * 13, // SPEC VN
-                        WidthUnit * 5, // Hold Time (min)
-                        WidthUnit * 8.78, // Chemical Mixing Code
-                        WidthUnit * 9.5, // Consumption (per m2)
-                        WidthUnit * 10.22, // Material Code
-                        WidthUnit * 11.67, // Material Name
-                        WidthUnit * 4.89, // Ratio
-                        WidthUnit * 4.89, // Qty (per m2)
-                        WidthUnit * 4.89, // Unit
-                        WidthUnit * 12, // Check Result
-                        WidthUnit * 12, // Correct Action
-                        WidthUnit * 6.56, // TE-1's Sign
-                        WidthUnit * 8.56], // Customer's Sign
-            columns: [
-                { type: 'text' }, // Step
-                { 
-                    type: 'dropdown', 
-                    source: Object.keys(productData),
-                    allowEmpty: false 
-                }, // Step Name (Dropdown)
-                { type: 'text'}, // Viscosity EN
-                { type: 'text'}, // Viscosity VN
-                { type: 'text'}, // SPEC EN
-                { type: 'text'}, // SPEC VN
-                { type: 'numeric'}, // Hold Time
-                { type: 'text'}, // Chemical Mixing Code
-                { type: 'numeric'}, // Consumption
-                { type: 'text' }, // Material Code
-                { type: 'text' }, // Material Name
-                { type: 'numeric' }, // Ratio
-                { type: 'numeric' }, // Qty
-                { type: 'text' }, // Unit
-                { type: 'text' }, // Check Result
-                { type: 'text' }, // Correct Action
-                { type: 'text' }, // TE-1 Sign
-                { type: 'text' }  // Customer Sign
-            ],
-            mergeCells: [], // Initially no cells are merged
-            licenseKey: 'non-commercial-and-evaluation',
-        });
+    </head>
+    <body>
+        {% include 'myapp/table_header.html' %}
         
-        // Function to update row based on Step Name (Column 2)
-        hot.addHook('afterChange', function(changes) {
-            if (!changes) return;
+        <div id="hot"></div>
+        
+        {% include 'myapp/table_footer.html' %}
 
-            changes.forEach(([row, prop, oldVal, newVal]) => {
-                if (prop === 1 && productData[newVal]) { // Step Name changed
-                    const product = productData[newVal];
-                    hot.setDataAtRowProp(row, 2, product.viscosity_en);
-                    hot.setDataAtRowProp(row, 3, product.viscosity_vn);
-                    hot.setDataAtRowProp(row, 4, product.SPEC_EN);
-                    hot.setDataAtRowProp(row, 5, product.SPEC_VN);
-                    hot.setDataAtRowProp(row, 6, product.hold_time);
-                    hot.setDataAtRowProp(row, 8, product.consumption);
-                }
-            });
-        });
+        <button class="no-print" onclick="mergeCells()">Merge Cells</button>
+        <button class="no-print" onclick="saveTable()">Save Table</button>
+        <button class="no-print" onclick="saveTableWithTempName()">Save Table with Temp Name</button>
+        <button class="no-print" onclick="exportToExcel()">Export to Excel</button>
+        <button class="no-print" onclick="printTable()">Print Table</button>
+        <button class="no-print" onclick="toggleRowIndex()">Toggle</button>
+        <script>
+            // Dictionary containing product details
+            let hot; // Declare it globally
 
-        function mergeCells() {
-            const data = hot.getData();
-            const mergeRanges = [];
-
-            function findMergeRange(startRow, col) {
-                let row = startRow;
-                while (row < data.length - 1 && (data[row + 1][0] === null || data[row + 1][0] === '')) { // Check only column 1 for merging condition
-                    row++;
-                }
-                if (row > startRow) {
-                    return { row: startRow, col: col, rowspan: row - startRow + 1, colspan: 1 };
-                }
-                return null;
+            async function loadProductData() {
+                const response = await fetch('/static/steps.json');
+                const productData = await response.json();
+                initHandsontable(productData);  // Only initialize Handsontable when data is ready
             }
 
-            for (let row = 0; row < data.length; row++) {
-                if (data[row][0] !== null && data[row][0] !== '') { // Check column 1 (index 0)
-                    for (let col = 0; col <= 8; col++) { // Merge cells from col1 to col9
-                        let mergeRange = findMergeRange(row, col);
-                        if (mergeRange) {
-                            mergeRanges.push(mergeRange);
-                        }
+            function initHandsontable(productData) {
+                const WidthUnit = 38 / 4.11;
+                const container = document.getElementById('hot');
+                hot = new Handsontable(container, {  // Assign to the global variable
+                    data: JSON.parse('{{ table_data_json|escapejs }}'),
+                    contextMenu: true,
+                    minRows: 20,
+                    rowHeights: true,
+                    height: 'auto',
+                    manualRowResize: true,
+                    visibleDropdown: false,
+                    colHeaders: [ "Step", "Step Name", "Viscosity & Wet Mill Thickness (EN)", "Viscosity & Wet Mill Thickness (VN)", 
+                                "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
+                                "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
+                                "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign" ],
+                    colWidths: [WidthUnit * 4.11, WidthUnit * 6.89, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, 
+                                WidthUnit * 5, WidthUnit * 8.78, WidthUnit * 9.5, WidthUnit * 10.22, WidthUnit * 11.67, 
+                                WidthUnit * 4.89, WidthUnit * 4.89, WidthUnit * 4.89, WidthUnit * 12, WidthUnit * 12, 
+                                WidthUnit * 6.56, WidthUnit * 8.56],
+                    columns: [
+                        { type: 'text' }, 
+                        { type: 'dropdown', source: Object.keys(productData), allowEmpty: false }, 
+                        { type: 'text'}, { type: 'text'}, { type: 'text'}, { type: 'text'}, 
+                        { type: 'numeric'}, { type: 'text'}, { type: 'numeric'}, { type: 'text' }, 
+                        { type: 'text' }, { type: 'numeric' }, { type: 'numeric' }, { type: 'text' }, 
+                        { type: 'text' }, { type: 'text' }, { type: 'text' }, { type: 'text' }  
+                    ],
+                    mergeCells: [], 
+                    licenseKey: 'non-commercial-and-evaluation',
+                });
+
+                hot.addHook('afterChange', function(changes) {
+                if (!changes) return;
+
+                changes.forEach(([row, prop, oldVal, newVal]) => {
+                    if (prop === 1 && productData[newVal]) { // Step Name changed
+                        const product = productData[newVal];
+                        hot.setDataAtRowProp(row, 2, product.viscosity_en);
+                        hot.setDataAtRowProp(row, 3, product.viscosity_vn);
+                        hot.setDataAtRowProp(row, 4, product.SPEC_EN);
+                        hot.setDataAtRowProp(row, 5, product.SPEC_VN);
+                        hot.setDataAtRowProp(row, 6, product.hold_time);
+                        hot.setDataAtRowProp(row, 8, product.consumption);
                     }
-                    row += mergeRanges.length > 0 ? mergeRanges[mergeRanges.length - 1].rowspan - 1 : 0; // Skip merged rows
-                }
+                });
+            });
             }
 
-            hot.updateSettings({
-                mergeCells: mergeRanges
-            });
-        }
-
-        function toggleRowIndex() {
-            hot.updateSettings({
-                rowHeaders: hot.getSettings().rowHeaders ? false : true
-            });
-        }
-        function saveTable() {
+            // Call the function to fetch data and initialize Handsontable
+            loadProductData();
+            function saveTable() {
             const tableData = hot.getData();
             fetch('/save/{{ table.id }}/', {
                 method: 'POST',
@@ -259,31 +133,8 @@
                 alert('An error occurred while saving the table.');
             });
         }
-
-        function exportToExcel() {
-            const data = hot.getData();
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(data);
-
-            // Apply merged cells
-            const mergeRanges = hot.getPlugin('mergeCells').mergedCellsCollection.mergedCells;
-            ws['!merges'] = mergeRanges.map(range => ({
-                s: { r: range.row, c: range.col },
-                e: { r: range.row + range.rowspan - 1, c: range.col + range.colspan - 1 }
-            }));
-
-            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-            XLSX.writeFile(wb, 'table.xlsx');
-        }
-
-        function printTable() {
-            window.print();
-        }
-
-        // Attach event listener to Print button
-        document.getElementById('printBtn').addEventListener('click', printTable);
-        
-    </script>
-    
-</body>
+        </script>
+    <!-- JavaScript -->
+    <script src="{% static 'hot_table.js' %}"></script>
+    </body>
 </html>

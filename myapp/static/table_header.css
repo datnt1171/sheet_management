@@ -41,6 +41,10 @@
     width: 355px;
 }
 
-/* #custom-header input, textarea {
+#custom-header .table-header input[type="text"], 
+#custom-header .table-header textarea {
     border: none;
-} */
+    background: transparent; /* Optional: Makes the background transparent */
+    resize: none; /* Optional: Prevents textarea resizing */
+    font-size: 11px;
+}
