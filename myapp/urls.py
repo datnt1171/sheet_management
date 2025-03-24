@@ -5,6 +5,6 @@ urlpatterns = [
     path('', views.table_list, name='table_list'),
     path('create/', views.create_table, name='create_table'),
     path('edit/<int:table_id>/', views.edit_table, name='edit_table'),
-    path('save/<int:table_id>/', views.save_table, name='save_table'),
-    path('save-with-temp-name/<int:table_id>/', views.save_table_with_temp_name, name='save_table_with_temp_name'),
+    path('api/save/<int:table_id>/', views.save_table, name='save_table'),
+    path('api/save-with-temp-name/<int:table_id>/', views.save_table_with_temp_name, name='save_table_with_temp_name'),
 ]

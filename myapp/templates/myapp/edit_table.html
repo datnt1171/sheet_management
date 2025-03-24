@@ -91,48 +91,44 @@
             // Call the function to fetch data and initialize Handsontable
             loadProductData();
             function saveTable() {
-            const tableData = hot.getData();
-            fetch('/save/{{ table.id }}/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: 'data=' + JSON.stringify(tableData)
-            })
-            .then(response => response.json())
-            .then(data => alert(data.message || data.error));
-        }
-
-        function saveTableWithTempName() {
-            const tableData = hot.getData();
-            const newTableName = '{{ table.name }}_temp';
-
-            fetch('/save-with-temp-name/{{ table.id }}/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({
-                    name: newTableName,
-                    data: tableData
+                const tableData = hot.getData();
+                fetch(`/api/save/{{ table.id }}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(tableData)
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Table saved with temp name successfully!');
-                    window.location.href = `/edit/${data.new_table_id}/`;
-                } else {
-                    alert(data.error || 'Failed to save table with temp name.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while saving the table.');
-            });
-        }
+                .then(response => response.json())
+                .then(data => alert(data.message || data.error));
+            }
+
+            function saveTableWithTempName() {
+                const tableData = hot.getData();
+                
+                fetch(`/api/save-with-temp-name/{{ table.id }}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(tableData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Table saved with temp name successfully!');
+                        window.location.href = `/edit/${data.new_table_id}/`;
+                    } else {
+                        alert(data.error || 'Failed to save table with temp name.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while saving the table.');
+                });
+            }
         </script>
     <!-- JavaScript -->
     <script src="{% static 'hot_table.js' %}"></script>
