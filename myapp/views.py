@@ -12,6 +12,7 @@ from .models import Table
 import json
 
 import pandas as pd
+import numpy as np
 # List all tables
 def table_list(request):
     tables = Table.objects.all()
@@ -22,8 +23,7 @@ def create_table(request):
     if request.method == 'POST':
         table_name = request.POST.get('name')
         if table_name:
-            empty_data = [['' for _ in range(5)] for _ in range(5)]
-            new_table = Table.objects.create(name=table_name, data=empty_data)
+            new_table = Table.objects.create(name=table_name)
             return redirect('edit_table', table_id=new_table.id)
     return render(request, 'myapp/create_table.html')
 
@@ -51,27 +51,60 @@ def save_table(request, table_id):
 @api_view(['POST'])
 def save_table_with_temp_name(request, table_id):
     try:
+        
+        df = pd.DataFrame(request.data)
+
+        df.columns = [ "Step", "Step Name", "Viscosity & Wet Mill Thickness (EN)", "Viscosity & Wet Mill Thickness (VN)", 
+                                        "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
+                                        "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
+                                        "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign"]
+        df.replace('', None, inplace=True)
+        df['Step'] = df['Step'].ffill()
+        df['Viscosity'] = df["Viscosity & Wet Mill Thickness (VN)"].str.extract(r"(\d+)\s*giây").astype("float")
+        df["Viscosity"] = df.groupby("Step")["Viscosity"].ffill()
+        grouped_df = (
+            df.dropna(subset=["Material Name"])  # Remove rows where Material Name is NaN
+            .groupby(["Step", "Viscosity"])["Material Name"]
+            .apply(lambda x: sorted(map(str.strip, x.dropna().tolist())))  # Trim spaces & sort
+            .reset_index()
+        )
+
+        df_formular = pd.read_excel(r"D:\VL1251\systemsheet\sheet_management\mapper.xlsx", sheet_name="test")
+
+        group_material_map = (
+            df_formular
+            .groupby(["group", "Viscosity"])["Material Name"]
+            .apply(lambda x: sorted(x.tolist()))  # Sort Material Names
+            .unstack(fill_value=[])  # Convert to dictionary-like structure
+            .to_dict(orient="index")  # Convert to dictionary
+        )
+
+        def find_matching_group(material_list, viscosity):
+            for group, viscosity_dict in group_material_map.items():
+                if viscosity in viscosity_dict and material_list == viscosity_dict[viscosity]:
+                    return group
+            return None  # Return None if no match is found
+
+        grouped_df["Group"] = grouped_df.apply(lambda row: find_matching_group(row["Material Name"], row["Viscosity"]), axis=1)
+        df = df.merge(grouped_df[['Step','Group']], on="Step", how="left")
+        
+        df = df.merge(df_formular,
+        how='left',
+        left_on = ['Material Name','Group','Viscosity'],
+        right_on= ['Material Name','group','Viscosity'])
+        
+        df['Ratio'] = df['ratio']
+        df['Qty (per m2)'] = df['per_m2']
+
+        df.drop(columns=['Viscosity','Group','group','ratio','per_m2'], inplace=True)
+        df.replace(np.nan, '', inplace=True)
+        data_2d_array = df.values.tolist()
         table = Table.objects.get(id=table_id)
         temp_table = Table.objects.create(
             name=f"{table.name}_temp",
-            data=request.data
+            data=data_2d_array
         )
-        df = pd.DataFrame(request.data)
-        df.columns = [ "Step", "Step Name", "Viscosity & Wet Mill Thickness (EN)", "Viscosity & Wet Mill Thickness (VN)", 
-                                "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
-                                "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
-                                "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign" ]
-        df['Step'].ffill(inplace=True)
-        grouped_df = df.groupby('Step')['Material Code'].apply(lambda x: x.dropna().tolist()).reset_index()
-        df_formular = pd.read_excel(r"D:\VL1251\sheet\mapper.xlsx", sheet_name='test')
-        group_material_map = df_formular.groupby("group")["Material Name"].apply(lambda x: sorted(x.tolist())).to_dict()
-        def find_matching_group(material_list):
-            for group, materials in group_material_map.items():
-                if sorted(material_list) == materials:
-                    return group
-            return None
-        grouped_df["Matched Group"] = grouped_df["Material Code"].apply(find_matching_group)
-        df_1 = df_1.merge(df_formular, how='left', left_on=['Matched Group','Material Code'], right_on=['group','Material Name'])
         return Response({'success': True, 'new_table_id': temp_table.id}, status=status.HTTP_201_CREATED)
     except Exception as e:
+        print(str(e))
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

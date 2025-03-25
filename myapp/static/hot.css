@@ -19,6 +19,16 @@
     htAutocompleteArrow {
         display: none !important;
     }
+
+    #hot {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .handsontable {
+        page-break-before: auto;
+        page-break-after: auto;
+    }
 }
 ::-webkit-scrollbar {
     @media print {
