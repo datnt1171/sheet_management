@@ -12,15 +12,15 @@
 
 /* Column 1 */
 #custom-footer .table-footer td:nth-child(1) {
-    width: 400px;
+    width: 395px;
 }
 
 /* Column 2 */
 #custom-footer .table-footer td:nth-child(2) {
-    width: 700px;
+    width: 695px;
 }
 
 /* Column 3 */
 #custom-footer .table-footer td:nth-child(3) {
-    width: 400px;
+    width: 395px;
 }

@@ -22,9 +22,15 @@ def table_list(request):
 def create_table(request):
     if request.method == 'POST':
         table_name = request.POST.get('name')
-        if table_name:
-            new_table = Table.objects.create(name=table_name)
-            return redirect('edit_table', table_id=new_table.id)
+
+        if Table.objects.filter(name=table_name).exists():
+            return render(request, 'myapp/create_table.html', {
+                'error': 'Table name already exists'
+            })
+
+        new_table = Table.objects.create(name=table_name)
+        return redirect('edit_table', table_id=new_table.id)
+
     return render(request, 'myapp/create_table.html')
 
 # Edit table data
