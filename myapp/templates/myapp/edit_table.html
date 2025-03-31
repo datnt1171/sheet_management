@@ -31,6 +31,21 @@
 
         {% include 'myapp/footer_image.html' %}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         <script>
             // Dictionary containing product details
             let hot; // Declare it globally
@@ -55,7 +70,7 @@
                                 "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
                                 "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
                                 "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign" ],
-                    colWidths: [WidthUnit * 4.11, WidthUnit * 6.89, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, 
+                    colWidths: [WidthUnit * 4.2, WidthUnit * 6.89, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, 
                                 WidthUnit * 5, WidthUnit * 8.78, WidthUnit * 9.5, WidthUnit * 10.22, WidthUnit * 11.67, 
                                 WidthUnit * 4.89, WidthUnit * 4.89, WidthUnit * 4.89, WidthUnit * 12, WidthUnit * 12, 
                                 WidthUnit * 6.56, WidthUnit * 8.56],
@@ -139,24 +154,23 @@
                 hot.setDataAtRowProp(newRowIndex, 4, "APPROVED BY: PAINT SUPPLIER");
                 hot.setDataAtRowProp(newRowIndex, 14, "APPROVED BY: FINISHING MANAGER");
 
-                // Merge cells
-                hot.updateSettings({
-                    mergeCells: [
-                        { row: newRowIndex, col: 0, rowspan: 1, colspan: 4 },  // Merge col 0-3
-                        { row: newRowIndex, col: 4, rowspan: 1, colspan: 10 }, // Merge col 4-13
-                        { row: newRowIndex, col: 14, rowspan: 1, colspan: 4 }  // Merge col 14-17
-                    ]
-                });
+                // Get current merged cells
+                let existingMerges = hot.getSettings().mergeCells || [];
+
+                // Add new row merge settings without removing previous ones
+                existingMerges.push(
+                    { row: newRowIndex, col: 0, rowspan: 1, colspan: 4 },  // Merge col 0-3
+                    { row: newRowIndex, col: 4, rowspan: 1, colspan: 10 }, // Merge col 4-13
+                    { row: newRowIndex, col: 14, rowspan: 1, colspan: 4 }  // Merge col 14-17
+                );
+
+                // Update Handsontable settings with the merged list
+                hot.updateSettings({ mergeCells: existingMerges });
 
                 // Apply class for styling
                 for (let col = 0; col < 18; col++) {
                     hot.setCellMeta(newRowIndex, col, 'className', 'htLastRow');
                 }
-
-                // Set row height
-                let rowHeights = hot.getSettings().rowHeights || []; // Get current row heights
-                rowHeights[newRowIndex] = 50; // Set fixed height (Adjust as needed)
-                hot.updateSettings({ rowHeights: rowHeights });
 
                 hot.render(); // Re-render the table
             }

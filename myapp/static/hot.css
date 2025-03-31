@@ -3,20 +3,21 @@
     color: #000;
     font-size: 13px;
     font-weight: bold;
-    white-space: normal; /* Ensure text wraps correctly */
+    white-space: normal;
 }
 .htCore td {
+    padding: 1px;
     font-size: 13px;
     color: #000;
     border: 1px solid #000 !important;
+    white-space: normal !important; /* Allow text to wrap */
+    word-wrap: break-word !important; /* Break long words */
+    overflow-wrap: break-word !important; /* Ensure wrapping in all cases */
 }
 /* Print Styles */
 @media print {
     /* Hide all buttons during printing */
     .no-print {
-        display: none !important;
-    }
-    htAutocompleteArrow {
         display: none !important;
     }
 
@@ -25,19 +26,14 @@
         max-height: none !important;
         overflow: visible !important;
     }
-    .handsontable {
-        page-break-before: auto;
-        page-break-after: auto;
+    #hot td.htAutocomplete:nth-child(2) > div {
+        display: none !important;
     }
 }
 ::-webkit-scrollbar {
     @media print {
         display: none !important;
     }
-}
-
-.htDropdownMenu .htAutocompleteArrow {
-    display: none !important;
 }
 
 .htLastRow {
