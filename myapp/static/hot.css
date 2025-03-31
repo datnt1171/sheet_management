@@ -46,3 +46,13 @@
 .htDropdownMenu .htAutocompleteArrow {
     display: none !important;
 }
+
+.image-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+.image-container img {
+    margin-bottom: 10px;
+}
