@@ -11,18 +11,15 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        
         <link rel="stylesheet" href="{% static 'hot.css' %}">
         <link rel="stylesheet" href="{% static 'table_header.css' %}">
-        <link rel="stylesheet" href="{% static 'table_footer.css' %}">
-
-
+        <link rel="stylesheet" href="{% static 'footer_image.css' %}">
     </head>
     <body>
         {% include 'myapp/table_header.html' %}
         
         <div id="hot"></div>
-        
-        {% include 'myapp/table_footer.html' %}
 
         <button class="no-print" onclick="mergeCells()">Merge Cells</button>
         <button class="no-print" onclick="saveTable()">Save Table</button>
@@ -30,11 +27,10 @@
         <button class="no-print" onclick="exportToExcel()">Export to Excel</button>
         <button class="no-print" onclick="printTable()">Print Table</button>
         <button class="no-print" onclick="toggleRowIndex()">Toggle</button>
+        <button class="no-print" onclick="appendFooterRow()">Append Footer Row</button>
 
-        <div class="image-container">
-            <img src="{% static 'RH-OAK-51-1 ( BARON ).png' %}" alt="blueprint">
-            <img src="{% static 'Quy trình + định mức sơn F-35O - 27.01.2024_F35O.png' %}" alt="panel">
-        </div>
+        {% include 'myapp/footer_image.html' %}
+
         <script>
             // Dictionary containing product details
             let hot; // Declare it globally
@@ -133,6 +129,38 @@
                     alert('An error occurred while saving the table.');
                 });
             }
+
+            function appendFooterRow() {
+                const newRowIndex = hot.countRows(); // Get index for the new row
+                hot.alter('insert_row', newRowIndex); // Insert a new row
+
+                // Set text for merged cells
+                hot.setDataAtRowProp(newRowIndex, 0, "PREPARED BY : FINISHING SPECIALIST");
+                hot.setDataAtRowProp(newRowIndex, 4, "APPROVED BY: PAINT SUPPLIER");
+                hot.setDataAtRowProp(newRowIndex, 14, "APPROVED BY: FINISHING MANAGER");
+
+                // Merge cells
+                hot.updateSettings({
+                    mergeCells: [
+                        { row: newRowIndex, col: 0, rowspan: 1, colspan: 4 },  // Merge col 0-3
+                        { row: newRowIndex, col: 4, rowspan: 1, colspan: 10 }, // Merge col 4-13
+                        { row: newRowIndex, col: 14, rowspan: 1, colspan: 4 }  // Merge col 14-17
+                    ]
+                });
+
+                // Apply class for styling
+                for (let col = 0; col < 18; col++) {
+                    hot.setCellMeta(newRowIndex, col, 'className', 'htLastRow');
+                }
+
+                // Set row height
+                let rowHeights = hot.getSettings().rowHeights || []; // Get current row heights
+                rowHeights[newRowIndex] = 50; // Set fixed height (Adjust as needed)
+                hot.updateSettings({ rowHeights: rowHeights });
+
+                hot.render(); // Re-render the table
+            }
+
         </script>
     <!-- JavaScript -->
     <script src="{% static 'hot_table.js' %}"></script>

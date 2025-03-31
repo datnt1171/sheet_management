@@ -48,3 +48,10 @@
     resize: none; /* Optional: Prevents textarea resizing */
     font-size: 11px;
 }
+
+.no-border input {
+    border: none;
+    background: transparent; 
+    font-size: 12px;
+    width: 90%;
+}
