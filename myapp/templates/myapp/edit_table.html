@@ -9,25 +9,29 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css">
         <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more"></script>
         
         <link rel="stylesheet" href="{% static 'hot.css' %}">
         <link rel="stylesheet" href="{% static 'table_header.css' %}">
         <link rel="stylesheet" href="{% static 'footer_image.css' %}">
     </head>
     <body>
-        {% include 'myapp/table_header.html' %}
+        <div id="print">
+            {% include 'myapp/table_header.html' %}
+            <div id="hot"></div>
+        </div>
         
-        <div id="hot"></div>
+        
+        
 
         <button class="no-print" onclick="mergeCells()">Merge Cells</button>
         <button class="no-print" onclick="saveTable()">Save Table</button>
         <button class="no-print" onclick="saveTableWithTempName()">Save Table with Temp Name</button>
         <button class="no-print" onclick="exportToExcel()">Export to Excel</button>
-        <button class="no-print" onclick="printTable()">Print Table</button>
+        <button class="no-print" onclick="captureTable()">Print</button>
         <button class="no-print" onclick="toggleRowIndex()">Toggle</button>
         <button class="no-print" onclick="appendFooterRow()">Append Footer Row</button>
+        <button id="capture-btn">Capture Handsontable</button>
 
         {% include 'myapp/footer_image.html' %}
 
@@ -174,6 +178,68 @@
 
                 hot.render(); // Re-render the table
             }
+
+
+            function captureTable() {
+    const tableElement = document.getElementById('print');
+    
+    // 1. Store original styles
+    const originalStyles = {
+        overflow: tableElement.style.overflow,
+        paddingBottom: tableElement.style.paddingBottom
+    };
+
+    // 2. Force-show all content (critical for borders)
+    tableElement.style.overflow = "visible";
+    tableElement.style.paddingBottom = "1px"; // Forces bottom border render
+
+    // 3. Target Handsontable's main containers
+    const hotContainers = tableElement.querySelectorAll('.ht_master, .wtHolder');
+    hotContainers.forEach(container => {
+        container.style.overflow = "visible";
+    });
+
+    domtoimage.toPng(tableElement, {
+        quality: 2,
+        bgcolor: "white",
+        style: {
+            "box-sizing": "border-box", // Ensures borders are included
+            "margin-bottom": "0"        // Prevents cutoff
+        }
+    }).then(dataUrl => {
+        // 4. Restore original styles
+        tableElement.style.overflow = originalStyles.overflow;
+        tableElement.style.paddingBottom = originalStyles.paddingBottom;
+        hotContainers.forEach(container => {
+            container.style.overflow = "";
+        });
+
+        // 5. Create print preview with border protection
+        const newWindow = window.open("");
+        newWindow.document.write(`
+            <html>
+                <head>
+                    <style>
+                        body { 
+                            margin: 0;
+                            padding: 10px; /* Safe area for borders */
+                        }
+                        img { 
+                            max-width: 100%;
+                            display: block; /* Removes line-height space */
+                            border: 1px solid transparent; /* Fallback */
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img src="${dataUrl}">
+                </body>
+            </html>
+        `);
+        newWindow.document.close();
+    }).catch(error => console.error("Capture failed:", error));
+};
+
 
         </script>
     <!-- JavaScript -->
