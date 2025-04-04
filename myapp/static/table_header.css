@@ -13,12 +13,12 @@
 }
 /* Column 1 */
 #custom-header .table-header td:nth-child(1) {
-    width: 217px;
+    width: 218px;
 }
 
 /* Column 2 */
 #custom-header .table-header td:nth-child(2) {
-    width: 116px;
+    width: 117px;
 }
 
 /* Column 3 */
@@ -33,12 +33,12 @@
 
 /* Column 5 */
 #custom-header .table-header td:nth-child(5) {
-    width: 334px;
+    width: 335px;
 }
 
 /* Column 6 */
 #custom-header .table-header td:nth-child(6) {
-    width: 355px;
+    width: 356px;
 }
 
 #custom-header .table-header input[type="text"], 

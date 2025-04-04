@@ -64,6 +64,7 @@ def save_table_with_temp_name(request, table_id):
                                         "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
                                         "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
                                         "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign"]
+        df_bak = df.copy()
         df.replace('', None, inplace=True)
         df['Step'] = df['Step'].ffill()
         df['Viscosity'] = df["Viscosity & Wet Mill Thickness (VN)"].str.extract(r"(\d+)\s*giây").astype("float")
@@ -104,6 +105,7 @@ def save_table_with_temp_name(request, table_id):
 
         df.drop(columns=['Viscosity','Group','group','ratio','per_m2'], inplace=True)
         df.replace(np.nan, '', inplace=True)
+        df['Step'] = df_bak['Step']
         data_2d_array = df.values.tolist()
         table = Table.objects.get(id=table_id)
         temp_table = Table.objects.create(
