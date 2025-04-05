@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from myapp.models import Table  # Assuming you have a Table model
+from .models import Table
 
 class TableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Table
-        fields = ['id', 'name', 'data']
+        fields = '__all__'  # Include all fields from the Table model in the serialization

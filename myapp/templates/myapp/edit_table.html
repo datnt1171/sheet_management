@@ -33,24 +33,6 @@
         <button onclick="captureTable()">Print</button>
         <button onclick="toggleRowIndex()">Toggle</button>
 
-
-        {% include 'myapp/footer_image.html' %}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         <script>
             // Dictionary containing product details
             let hot; // Declare it globally
@@ -110,44 +92,35 @@
 
             // Call the function to fetch data and initialize Handsontable
             loadProductData();
+
             function saveTable() {
+                const headerData = {
+                    name_verbose: document.getElementById('table_name_verbose').value,
+                    sheen: document.getElementById('table_sheen').value,
+                    dft: document.getElementById('table_dft').value,
+                    chemical: document.getElementById('table_chemical').value,
+                    substrate: document.getElementById('table_substrate').value,
+                    grain_filling: document.getElementById('table_grain_filling').value,
+                    developer: document.getElementById('table_developer').value,
+                    chemical_waste: document.getElementById('table_chemical_waste').value,
+                    conveyor_speed: document.getElementById('table_conveyor_speed').value,
+                };
+
                 const tableData = hot.getData();
+
                 fetch(`/api/save/{{ table.id }}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
-                    body: JSON.stringify(tableData)
+                    body: JSON.stringify({
+                        headerData: headerData,
+                        data: tableData
+                    })
                 })
                 .then(response => response.json())
                 .then(data => alert(data.message || data.error));
-            }
-
-            function saveTableWithConsumption() {
-                const tableData = hot.getData();
-                
-                fetch(`/api/save-with-temp-name/{{ table.id }}/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify(tableData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Table saved with temp name successfully!');
-                        window.location.href = `/edit/${data.new_table_id}/`;
-                    } else {
-                        alert(data.error || 'Failed to save table with temp name.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while saving the table.');
-                });
             }
 
             function appendFooterRow() {
@@ -180,103 +153,6 @@
                 hot.render(); // Re-render the table
             }
 
-            // Function to capture the table then convert to PDF
-            async function captureTable() {
-                const tableElement = document.getElementById('print');
-                
-                // 1. Force full height calculation
-                const originalHeight = tableElement.style.height;
-                tableElement.style.height = `${tableElement.scrollHeight}px`;
-                
-                // 2. Disable all overflow (critical)
-                const containers = tableElement.querySelectorAll('.ht_master, .wtHolder, .handsontable');
-                containers.forEach(el => {
-                    el.style.overflow = 'visible';
-                    el.style.borderBottom = '1px solid transparent';
-                });
-
-                // 3. Add small delay for browser to re-render
-                await new Promise(resolve => setTimeout(resolve, 50));
-
-                try {
-                    // 4. Capture with exact dimensions
-                    const dataUrl = await domtoimage.toPng(tableElement, {
-                        quality: 3,
-                        width: tableElement.scrollWidth,
-                        height: tableElement.scrollHeight + 10,
-                        style: {
-                            margin: '0',
-                            padding: '0',
-                            transform: 'none'
-                        }
-                    });
-
-                    // ===== NEW: PDF SPLITTING LOGIC =====
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF({
-                        orientation: 'landscape',
-                        unit: 'mm'
-                    });
-
-                    const img = new Image();
-                    img.src = dataUrl;
-                    
-                    await new Promise(resolve => img.onload = resolve);
-
-                    // PDF page dimensions (A4 landscape: 297mm x 210mm)
-                    const pageWidth = 297;
-                    const pageHeight = 210;
-                    const margin = 1; // mm margin
-                    const usableWidth = pageWidth - (margin * 2);
-                    const usableHeight = pageHeight - (margin * 2);
-
-                    // Calculate how much image height fits per PDF page (in pixels)
-                    const pxPerPage = (usableHeight * img.width) / usableWidth;
-                    let currentPosition = 0;
-
-                    while (currentPosition < img.height) {
-                        const chunkHeight = Math.min(pxPerPage, img.height - currentPosition);
-                        
-                        // Create canvas for the current chunk
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = chunkHeight;
-                        const ctx = canvas.getContext('2d');
-                        
-                        ctx.drawImage(
-                            img,
-                            0, currentPosition,
-                            img.width, chunkHeight,
-                            0, 0,
-                            img.width, chunkHeight
-                        );
-
-                        // Add new page if not first page
-                        if (currentPosition > 0) {
-                            pdf.addPage();
-                        }
-
-                        // Add image to PDF (scaled to fit page)
-                        pdf.addImage(
-                            canvas.toDataURL('image/png'),
-                            'PNG',
-                            margin,
-                            margin,
-                            usableWidth,
-                            (chunkHeight * usableWidth) / img.width
-                        );
-
-                        currentPosition += chunkHeight;
-                    }
-
-                    // Save the PDF
-                    pdf.save('handsontable.pdf');
-                    // ===== END OF NEW CODE =====
-
-                } catch (error) {
-                    console.error('Capture error:', error);
-                }
-            }
 
         </script>
     <!-- JavaScript -->

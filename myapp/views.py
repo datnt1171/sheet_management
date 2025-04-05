@@ -36,10 +36,28 @@ def create_table(request):
 # Edit table data
 def edit_table(request, table_id):
     table = get_object_or_404(Table, id=table_id)
-    table_data_json = json.dumps(table.data)  # Convert to JSON for safe rendering
-    return render(request, 'myapp/edit_table.html', {'table': table, 'table_data_json': table_data_json})
+    table_data_json = json.dumps(table.data)
+
+    header_data = {
+        'name_verbose': table.name_verbose,
+        'sheen': table.sheen,
+        'dft': table.dft,
+        'chemical': table.chemical,
+        'substrate': table.substrate,
+        'grain_filling': table.grain_filling,
+        'developer': table.developer,
+        'chemical_waste': table.chemical_waste,
+        'conveyor_speed': table.conveyor_speed,
+    }
+
+    return render(request, 'myapp/edit_table.html', {
+        'table': table,
+        'table_data_json': table_data_json,
+        'header_data': header_data,
+    })
 
 # Save table data
+@api_view(['POST'])
 @api_view(['POST'])
 def save_table(request, table_id):
     try:
@@ -47,12 +65,38 @@ def save_table(request, table_id):
     except Table.DoesNotExist:
         return Response({'error': 'Table not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = TableSerializer(table, data={'data': request.data}, partial=True)
+    # Extract header fields from the request
+    header_data = {
+        'name_verbose': request.data.get('name_verbose'),
+        'sheen': request.data.get('sheen'),
+        'dft': request.data.get('dft'),
+        'chemical': request.data.get('chemical'),
+        'substrate': request.data.get('substrate'),
+        'grain_filling': request.data.get('grain_filling'),
+        'developer': request.data.get('developer'),
+        'chemical_waste': request.data.get('chemical_waste'),
+        'conveyor_speed': request.data.get('conveyor_speed'),
+    }
 
-    if serializer.is_valid():
-        serializer.save()
-        return Response({'message': 'Table saved successfully!'}, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # Update the header fields in the table
+    for field, value in header_data.items():
+        setattr(table, field, value)
+    
+    # Save the updated header fields
+    table.save()
+
+    # Extract the table data from the request
+    table_data = request.data.get('data')
+
+    # Update the table's data field
+    if table_data:
+        table.data = table_data
+
+    # Save the table data
+    table.save()
+
+    return Response({'message': 'Table saved successfully!'}, status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
 def save_table_with_temp_name(request, table_id):

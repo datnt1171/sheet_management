@@ -1,45 +1,45 @@
 <div id="custom-header">
-        <table class="table-header">
-            <tr>
-                <th colspan="6">
-                    <input type="text" id="table_name" value="{{ table.name }}" style="border: none; text-align: center; font-weight: bold; font-size: 28px; width: 99%;">
-                </th>
-            </tr>
-            <tr>
-                <td>
-                    <strong>Name:</strong> <input type="text" id="name" required style="width: 162px"> <br>
-                    <strong>Sheen:</strong> <input type="text" id="sheen" required style="width: 161px"> <br>
-                    <strong>DFT:</strong> <input type="text" id="dft" required style="width: 169px"> <br>
-                    <strong>Chemical:</strong> <input type="text" id="chemical" required style="width: 142px"> <br>
-                    <strong>Substrate:</strong> <input type="text" id="substrate" required style="width: 142px"> <br>
-                    <strong>Grain Filling:</strong> <input type="text" id="grain_filling" required style="width: 123px"> <br>
-                    <strong>Developed/Duplicated by:</strong> <input type="text" id="developer" required >
-                </td>
-                <td>
-                    <strong>Chemical waste:</strong> <br> <textarea id="chemical_waste" rows="1" cols="10"></textarea> <br>
-                    <strong>Conveyor speed:</strong> <br> <textarea id="conveyor_speed" rows="3" cols="10"></textarea>
-                </td>
-                <td>
-                    <strong>1.</strong> Wood substrate before finishing process should be below 10% MC <br>
-                    <strong>2.</strong> Last sanding on white wood should be grit #240 <br>
-                    <strong>3.</strong> White wood surface must be free from grease, oil, or other contamination. Please reject white wood with any defects.
-                </td>
-                <td>
-                    <strong>With panel test:</strong> <input type="checkbox"> (Có mẫu test chuyền) <br>
-                    <strong>No panel test:</strong> <input type="checkbox"> (Không có mẫu test chuyền) <br>
-                    <strong>Testing:</strong> <input type="checkbox"> <br>
-                    <strong>Chemical Yellowing:</strong> <input type="checkbox">
-                </td>
-                <td>
-                    <strong>4.</strong> Always ask TE-1 for advice in case of changing process mixing ratio, application amount, drying time, application method, must get approval form... <br>
-                    <strong>5.</strong> Strictly follow the process, always refer to the PCP <br>
-                    <strong>6.</strong> Viscosity reading using NK2 cup standard.
-                </td>
-                <td style="text-align: center;">
-                    <strong>DAILY CHECKLIST</strong> <br>
-                    (Kiểm tra hằng ngày) <br>
-                    <strong>Date:</strong>
-                </td>
-            </tr>
-        </table>
-    </div>
+    <table class="table-header">
+        <tr>
+            <th colspan="6">
+                <input type="text" id="table_name" value="{{ table.name }}" style="border: none; text-align: center; font-weight: bold; font-size: 28px; width: 99%;">
+            </th>
+        </tr>
+        <tr>
+            <td>
+                <strong>Name:</strong> <input type="text" id="table_name_verbose" value="{{ header_data.name_verbose|default_if_none:'' }}" required style="width: 162px"> <br>
+                <strong>Sheen:</strong> <input type="text" id="table_sheen" value="{{ header_data.sheen|default_if_none:'' }}" required style="width: 161px"> <br>
+                <strong>DFT:</strong> <input type="text" id="table_dft" value="{{ header_data.dft|default_if_none:'' }}" required style="width: 169px"> <br>
+                <strong>Chemical:</strong> <input type="text" id="table_chemical" value="{{ header_data.chemical|default_if_none:'' }}" required style="width: 142px"> <br>
+                <strong>Substrate:</strong> <input type="text" id="table_substrate" value="{{ header_data.substrate|default_if_none:'' }}" required style="width: 142px"> <br>
+                <strong>Grain Filling:</strong> <input type="text" id="table_grain_filling" value="{{ header_data.grain_filling|default_if_none:'' }}" required style="width: 123px"> <br>
+                <strong>Developed/Duplicated by:</strong> <input type="text" id="table_developer" value="{{ header_data.developer|default_if_none:'' }}" required >
+            </td>
+            <td>
+                <strong>Chemical waste:</strong> <br> <textarea id="table_chemical_waste" value="{{ header_data.chemical_waste|default_if_none:'' }}" rows="1" cols="10"></textarea> <br>
+                <strong>Conveyor speed:</strong> <br> <textarea id="table_conveyor_speed" value="{{ header_data.conveyor_speed|default_if_none:'' }}" rows="3" cols="10"></textarea>
+            </td>
+            <td>
+                <strong>1.</strong> Wood substrate before finishing process should be below 10% MC <br>
+                <strong>2.</strong> Last sanding on white wood should be grit #240 <br>
+                <strong>3.</strong> White wood surface must be free from grease, oil, or other contamination. Please reject white wood with any defects.
+            </td>
+            <td>
+                <strong>With panel test:</strong> <input type="checkbox"> (Có mẫu test chuyền) <br>
+                <strong>No panel test:</strong> <input type="checkbox"> (Không có mẫu test chuyền) <br>
+                <strong>Testing:</strong> <input type="checkbox"> <br>
+                <strong>Chemical Yellowing:</strong> <input type="checkbox">
+            </td>
+            <td>
+                <strong>4.</strong> Always ask TE-1 for advice in case of changing process mixing ratio, application amount, drying time, application method, must get approval form... <br>
+                <strong>5.</strong> Strictly follow the process, always refer to the PCP <br>
+                <strong>6.</strong> Viscosity reading using NK2 cup standard.
+            </td>
+            <td style="text-align: center;">
+                <strong>DAILY CHECKLIST</strong> <br>
+                (Kiểm tra hằng ngày) <br>
+                <strong>Date:</strong>
+            </td>
+        </tr>
+    </table>
+</div>
