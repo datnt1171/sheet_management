@@ -17,6 +17,7 @@
         <link rel="stylesheet" href="{% static 'footer_image.css' %}">
     </head>
     <body>
+        {% include 'myapp/metadata.html' %}
         <div id="print">
             {% include 'myapp/table_header.html' %}
             <div id="hot"></div>
@@ -107,7 +108,10 @@
                     developer: document.getElementById('table_developer').value,
                     chemical_waste: document.getElementById('table_chemical_waste').value,
                     conveyor_speed: document.getElementById('table_conveyor_speed').value,
+                    factory_name: document.getElementById('table_factory_name').value,
+                    collection: document.getElementById('table_collection').value,
                 };
+                console.log(headerData)
                 const tableData = hot.getData();
 
                 fetch(`/api/save/{{ table.id }}/`, {
@@ -136,7 +140,10 @@
                     developer: document.getElementById('table_developer').value,
                     chemical_waste: document.getElementById('table_chemical_waste').value,
                     conveyor_speed: document.getElementById('table_conveyor_speed').value,
+                    table_factory_name: document.getElementById('table_factory_name').value,
+                    table_collection: document.getElementById('table_collection').value,
                 };
+                
                 const tableData = hot.getData();
                 
                 fetch(`/api/save-with-consumption/{{ table.id }}/`, {

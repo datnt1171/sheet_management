@@ -4,16 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Table List</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #999;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <h1>Tables</h1>
     <button onclick="location.href='/create/'">Create New Table</button>
-    <ul>
-        {% for table in tables %}
-            <li>
-                <a href="/edit/{{ table.id }}/">{{ table.name }}</a>
-            </li>
-        {% endfor %}
-    </ul>
+    <table>
+        <thead>
+            <tr>
+                <th>Table Name</th>
+                <th>Customer Name</th>
+                <th>Collection</th>
+                <th>Created Date</th>
+                <th>Last Modified</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for table in tables %}
+            <tr>
+                <td><a href="/edit/{{ table.id }}/">{{ table.name }}</a></td>
+                <td>{{ table.factory_name }}</td>
+                <td>{{ table.collection }}</td>
+                <td>{{ table.created_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ table.updated_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No tables found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

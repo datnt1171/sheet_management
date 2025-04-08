@@ -21,6 +21,9 @@ class Table(models.Model):
     
     blueprint = models.ImageField(upload_to='blueprints/', null=True, blank=True)
     panel = models.ImageField(upload_to='panels/', null=True, blank=True)
+
+    factory_name = models.CharField(max_length=255, null=True)
+    collection = models.CharField(max_length=255, null=True)
     
     def __str__(self):
         return self.name

@@ -14,8 +14,8 @@ import json
 import pandas as pd
 import numpy as np
 # List all tables
-def table_list(request):
-    tables = Table.objects.all()
+def index(request):
+    tables = Table.objects.all().order_by('-updated_at')  # optional ordering
     return render(request, 'myapp/index.html', {'tables': tables})
 
 # Create a new table with a 5x5 empty grid
@@ -61,6 +61,8 @@ def edit_table(request, table_id):
         'developer': table.developer,
         'chemical_waste': table.chemical_waste,
         'conveyor_speed': table.conveyor_speed,
+        'factory_name': table.factory_name,
+        'collection': table.collection
     }
 
     return render(request, 'myapp/edit_table.html', {
@@ -84,7 +86,8 @@ def save_table(request, table_id):
     for field in [
         'name',
         'name_verbose', 'sheen', 'dft', 'chemical', 'substrate',
-        'grain_filling', 'developer', 'chemical_waste', 'conveyor_speed'
+        'grain_filling', 'developer', 'chemical_waste', 'conveyor_speed',
+        'factory_name', 'collection'
     ]:
         setattr(table, field, header_data.get(field, ''))
 
@@ -177,7 +180,9 @@ def save_table_with_consumption(request, table_id):
             developer=header_data.get("developer", ""),
             chemical_waste=header_data.get("chemical_waste", ""),
             conveyor_speed=header_data.get("conveyor_speed", ""),
-            data=data_2d_array
+            data=data_2d_array,
+            factory_name=header_data.get("factory_name", ""),
+            collection=header_data.get("collection", ""),
         )
 
         return Response({'success': True, 'new_table_id': consumption_table.id}, status=status.HTTP_201_CREATED)
