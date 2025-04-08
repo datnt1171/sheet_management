@@ -1,6 +1,25 @@
 {% load static %}
 
-<div class="no-print image-container">
-    <img src="{% static '/image/RH-OAK-51-1 ( BARON ).png' %}" alt="blueprint">
-    <img src="{% static '/image/Quy trình + định mức sơn F-35O - 27.01.2024_F35O.png' %}" alt="panel">
+<form id="image-upload-form" enctype="multipart/form-data" method="POST">
+    {% csrf_token %}
+    <div class="no-print image-container">
+        <label for="blueprintImage">Upload Blueprint:</label>
+        <input type="file" id="blueprintImage" name="blueprint" accept="image/*"><br>
+
+        <label for="panelImage">Upload Panel:</label>
+        <input type="file" id="panelImage" name="panel" accept="image/*"><br>
+
+        <button type="submit">Upload Images</button>
+    </div>
+</form>
+
+<hr>
+
+<div id="uploaded-images" class="no-print image-container">
+    {% if table.blueprint %}
+        <img src="{{ table.blueprint.url }}" alt="Uploaded Blueprint">
+    {% endif %}
+    {% if table.panel %}
+        <img src="{{ table.panel.url }}" alt="Uploaded Panel">
+    {% endif %}
 </div>

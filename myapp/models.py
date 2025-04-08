@@ -19,5 +19,8 @@ class Table(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     
+    blueprint = models.ImageField(upload_to='blueprints/', null=True, blank=True)
+    panel = models.ImageField(upload_to='panels/', null=True, blank=True)
+    
     def __str__(self):
         return self.name

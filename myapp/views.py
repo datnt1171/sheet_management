@@ -34,10 +34,23 @@ def create_table(request):
     return render(request, 'myapp/create_table.html')
 
 # Edit table data
+@csrf_exempt
 def edit_table(request, table_id):
     table = get_object_or_404(Table, id=table_id)
-    table_data_json = json.dumps(table.data)
 
+    # Handle image upload
+    if request.method == 'POST' and request.FILES:
+        if 'blueprint' in request.FILES:
+            table.blueprint = request.FILES['blueprint']
+        if 'panel' in request.FILES:
+            table.panel = request.FILES['panel']
+        table.save()
+        return redirect('edit_table', table_id=table.id)
+
+    # Convert table data to JSON
+    table_data_json = json.dumps(table.data or [])
+
+    # Prepare header data for rendering
     header_data = {
         'name_verbose': table.name_verbose,
         'sheen': table.sheen,
