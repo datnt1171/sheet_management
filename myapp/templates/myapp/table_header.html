@@ -16,8 +16,8 @@
                 <strong>Developed/Duplicated by:</strong> <input type="text" id="table_developer" value="{{ header_data.developer|default_if_none:'' }}" required >
             </td>
             <td>
-                <strong>Chemical waste:</strong> <br> <textarea id="table_chemical_waste" value="{{ header_data.chemical_waste|default_if_none:'' }}" rows="1" cols="10"></textarea> <br>
-                <strong>Conveyor speed:</strong> <br> <textarea id="table_conveyor_speed" value="{{ header_data.conveyor_speed|default_if_none:'' }}" rows="3" cols="10"></textarea>
+                <strong>Chemical waste:</strong> <br> <textarea id="table_chemical_waste" rows="1" cols="10">{{ header_data.chemical_waste|default_if_none:'' }}</textarea> <br>
+                <strong>Conveyor speed:</strong> <br> <textarea id="table_conveyor_speed" rows="3" cols="10">{{ header_data.conveyor_speed|default_if_none:'' }}</textarea>
             </td>
             <td>
                 <strong>1.</strong> Wood substrate before finishing process should be below 10% MC <br>

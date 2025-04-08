@@ -95,6 +95,7 @@
 
             function saveTable() {
                 const headerData = {
+                    name: document.getElementById('table_name').value,
                     name_verbose: document.getElementById('table_name_verbose').value,
                     sheen: document.getElementById('table_sheen').value,
                     dft: document.getElementById('table_dft').value,
@@ -105,7 +106,6 @@
                     chemical_waste: document.getElementById('table_chemical_waste').value,
                     conveyor_speed: document.getElementById('table_conveyor_speed').value,
                 };
-
                 const tableData = hot.getData();
 
                 fetch(`/api/save/{{ table.id }}/`, {
@@ -121,6 +121,46 @@
                 })
                 .then(response => response.json())
                 .then(data => alert(data.message || data.error));
+            }
+
+            function saveTableWithConsumption() {
+                const headerData = {
+                    name_verbose: document.getElementById('table_name_verbose').value,
+                    sheen: document.getElementById('table_sheen').value,
+                    dft: document.getElementById('table_dft').value,
+                    chemical: document.getElementById('table_chemical').value,
+                    substrate: document.getElementById('table_substrate').value,
+                    grain_filling: document.getElementById('table_grain_filling').value,
+                    developer: document.getElementById('table_developer').value,
+                    chemical_waste: document.getElementById('table_chemical_waste').value,
+                    conveyor_speed: document.getElementById('table_conveyor_speed').value,
+                };
+                const tableData = hot.getData();
+                
+                fetch(`/api/save-with-consumption/{{ table.id }}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        headerData: headerData,
+                        data: tableData
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Table saved with consumption successfully!');
+                        window.location.href = `/edit/${data.new_table_id}/`;
+                    } else {
+                        alert(data.error || 'Failed to save table with consumption.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while saving the table.');
+                });
             }
 
             function appendFooterRow() {

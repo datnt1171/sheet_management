@@ -58,65 +58,56 @@ def edit_table(request, table_id):
 
 # Save table data
 @api_view(['POST'])
-@api_view(['POST'])
 def save_table(request, table_id):
     try:
         table = Table.objects.get(id=table_id)
     except Table.DoesNotExist:
         return Response({'error': 'Table not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    # Extract header fields from the request
-    header_data = {
-        'name_verbose': request.data.get('name_verbose'),
-        'sheen': request.data.get('sheen'),
-        'dft': request.data.get('dft'),
-        'chemical': request.data.get('chemical'),
-        'substrate': request.data.get('substrate'),
-        'grain_filling': request.data.get('grain_filling'),
-        'developer': request.data.get('developer'),
-        'chemical_waste': request.data.get('chemical_waste'),
-        'conveyor_speed': request.data.get('conveyor_speed'),
-    }
+    # ✅ Get headerData from the nested dict
+    header_data = request.data.get('headerData', {})  # get returns {} if not found
 
-    # Update the header fields in the table
-    for field, value in header_data.items():
-        setattr(table, field, value)
-    
-    # Save the updated header fields
-    table.save()
 
-    # Extract the table data from the request
-    table_data = request.data.get('data')
+    for field in [
+        'name',
+        'name_verbose', 'sheen', 'dft', 'chemical', 'substrate',
+        'grain_filling', 'developer', 'chemical_waste', 'conveyor_speed'
+    ]:
+        setattr(table, field, header_data.get(field, ''))
 
-    # Update the table's data field
-    if table_data:
-        table.data = table_data
+    # ✅ Get and set the table data
+    table_data = request.data.get('data', [])
+    table.data = table_data
 
-    # Save the table data
     table.save()
 
     return Response({'message': 'Table saved successfully!'}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
-def save_table_with_temp_name(request, table_id):
+def save_table_with_consumption(request, table_id):
     try:
-        
-        df = pd.DataFrame(request.data)
+        # --- Extract incoming data ---
+        header_data = request.data.get("headerData", {})
+        table_data = request.data.get("data", [])
 
+        # --- Convert data to DataFrame ---
+        df = pd.DataFrame(table_data)
         df.columns = [ "Step", "Step Name", "Viscosity & Wet Mill Thickness (EN)", "Viscosity & Wet Mill Thickness (VN)", 
-                                        "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
-                                        "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
-                                        "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign"]
+                       "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
+                       "Material Code", "Material Name", "Ratio", "Qty (per m2)", "Unit", 
+                       "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign" ]
+
         df_bak = df.copy()
         df.replace('', None, inplace=True)
         df['Step'] = df['Step'].ffill()
         df['Viscosity'] = df["Viscosity & Wet Mill Thickness (VN)"].str.extract(r"(\d+)\s*giây").astype("float")
         df["Viscosity"] = df.groupby("Step")["Viscosity"].ffill()
+
         grouped_df = (
-            df.dropna(subset=["Material Name"])  # Remove rows where Material Name is NaN
+            df.dropna(subset=["Material Name"])
             .groupby(["Step", "Viscosity"])["Material Name"]
-            .apply(lambda x: sorted(map(str.strip, x.dropna().tolist())))  # Trim spaces & sort
+            .apply(lambda x: sorted(map(str.strip, x.dropna().tolist())))
             .reset_index()
         )
 
@@ -125,38 +116,60 @@ def save_table_with_temp_name(request, table_id):
         group_material_map = (
             df_formular
             .groupby(["group", "Viscosity"])["Material Name"]
-            .apply(lambda x: sorted(x.tolist()))  # Sort Material Names
-            .unstack(fill_value=[])  # Convert to dictionary-like structure
-            .to_dict(orient="index")  # Convert to dictionary
+            .apply(lambda x: sorted(x.tolist()))
+            .unstack(fill_value=[])
+            .to_dict(orient="index")
         )
 
         def find_matching_group(material_list, viscosity):
             for group, viscosity_dict in group_material_map.items():
                 if viscosity in viscosity_dict and material_list == viscosity_dict[viscosity]:
                     return group
-            return None  # Return None if no match is found
+            return None
 
-        grouped_df["Group"] = grouped_df.apply(lambda row: find_matching_group(row["Material Name"], row["Viscosity"]), axis=1)
-        df = df.merge(grouped_df[['Step','Group']], on="Step", how="left")
-        
-        df = df.merge(df_formular,
-        how='left',
-        left_on = ['Material Name','Group','Viscosity'],
-        right_on= ['Material Name','group','Viscosity'])
-        
+        grouped_df["Group"] = grouped_df.apply(
+            lambda row: find_matching_group(row["Material Name"], row["Viscosity"]), axis=1
+        )
+        df = df.merge(grouped_df[['Step', 'Group']], on="Step", how="left")
+
+        df = df.merge(
+            df_formular,
+            how='left',
+            left_on=['Material Name', 'Group', 'Viscosity'],
+            right_on=['Material Name', 'group', 'Viscosity']
+        )
+
         df['Ratio'] = df['ratio']
         df['Qty (per m2)'] = df['per_m2']
 
-        df.drop(columns=['Viscosity','Group','group','ratio','per_m2'], inplace=True)
+        df.drop(columns=['Viscosity', 'Group', 'group', 'ratio', 'per_m2'], inplace=True)
         df.replace(np.nan, '', inplace=True)
         df['Step'] = df_bak['Step']
+
+        # --- Convert DataFrame to list of lists ---
         data_2d_array = df.values.tolist()
+
+        # --- Get original table ---
         table = Table.objects.get(id=table_id)
-        temp_table = Table.objects.create(
-            name=f"{table.name}_temp",
+
+        # --- Create temp table with copied + new header data ---
+        consumption_table = Table.objects.create(
+            name=f"{table.name}_consumption",
+            name_verbose=header_data.get("name_verbose", ""),
+            sheen=header_data.get("sheen", ""),
+            dft=header_data.get("dft", ""),
+            chemical=header_data.get("chemical", ""),
+            substrate=header_data.get("substrate", ""),
+            grain_filling=header_data.get("grain_filling", ""),
+            developer=header_data.get("developer", ""),
+            chemical_waste=header_data.get("chemical_waste", ""),
+            conveyor_speed=header_data.get("conveyor_speed", ""),
             data=data_2d_array
         )
-        return Response({'success': True, 'new_table_id': temp_table.id}, status=status.HTTP_201_CREATED)
+
+        return Response({'success': True, 'new_table_id': consumption_table.id}, status=status.HTTP_201_CREATED)
+
     except Exception as e:
         print(str(e))
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
