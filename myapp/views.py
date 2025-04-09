@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,12 +16,31 @@ import json
 
 import pandas as pd
 import numpy as np
+
+
+def is_crud_user(user):
+    return user.groups.filter(name='CRUD').exists()
+
+
 # List all tables
+@login_required
 def index(request):
-    tables = Table.objects.all().order_by('-updated_at')  # optional ordering
-    return render(request, 'myapp/index.html', {'tables': tables})
+    tables = list(Table.objects.values(
+        'id', 'name', 'factory_name', 'collection',
+        'chemical', 'developer',
+        'created_at', 'updated_at'
+    ))
+    
+    for table in tables:
+        table['created_at'] = table['created_at'].strftime('%Y-%m-%d %H:%M') if table['created_at'] else ''
+        table['updated_at'] = table['updated_at'].strftime('%Y-%m-%d %H:%M') if table['updated_at'] else ''
+        
+    is_crud_user = request.user.groups.filter(name='CRUD').exists()
+    return render(request, 'myapp/index.html', {'tables': tables, 'is_crud_user': is_crud_user})
 
 # Create a new table with a 5x5 empty grid
+@login_required
+@user_passes_test(is_crud_user)
 def create_table(request):
     if request.method == 'POST':
         table_name = request.POST.get('name')
@@ -34,6 +56,7 @@ def create_table(request):
     return render(request, 'myapp/create_table.html')
 
 # Edit table data
+@login_required
 @csrf_exempt
 def edit_table(request, table_id):
     table = get_object_or_404(Table, id=table_id)
@@ -72,6 +95,8 @@ def edit_table(request, table_id):
     })
 
 # Save table data
+@login_required
+@user_passes_test(is_crud_user)
 @api_view(['POST'])
 def save_table(request, table_id):
     try:
@@ -79,7 +104,7 @@ def save_table(request, table_id):
     except Table.DoesNotExist:
         return Response({'error': 'Table not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    # ✅ Get headerData from the nested dict
+    #  Get headerData from the nested dict
     header_data = request.data.get('headerData', {})  # get returns {} if not found
 
 
@@ -91,7 +116,7 @@ def save_table(request, table_id):
     ]:
         setattr(table, field, header_data.get(field, ''))
 
-    # ✅ Get and set the table data
+    #  Get and set the table data
     table_data = request.data.get('data', [])
     table.data = table_data
 
@@ -99,7 +124,8 @@ def save_table(request, table_id):
 
     return Response({'message': 'Table saved successfully!'}, status=status.HTTP_200_OK)
 
-
+@login_required
+@user_passes_test(is_crud_user)
 @api_view(['POST'])
 def save_table_with_consumption(request, table_id):
     try:

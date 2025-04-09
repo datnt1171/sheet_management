@@ -1,68 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Table List</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
+  <meta charset="UTF-8">
+  <title>All Systemsheets</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        th, td {
-            border: 1px solid #999;
-            padding: 10px;
-            text-align: left;
-        }
+  <!-- AG Grid Styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/styles/ag-grid.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/styles/ag-theme-alpine.css">
 
-        th {
-            background-color: #f4f4f4;
-        }
-
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-
-        a {
-            text-decoration: none;
-            color: #007bff;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+    }
+    #tableGrid {
+      height: 600px;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-    <h1>Tables</h1>
+    {% if user.is_authenticated %}
+      <p>Welcome {{ request.user.username }}</p>
+      <form action="{% url 'logout' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+    {% endif %}
+  <h1>All Systemsheets</h1>
+  {% if is_crud_user %}
     <button onclick="location.href='/create/'">Create New Table</button>
-    <table>
-        <thead>
-            <tr>
-                <th>Table Name</th>
-                <th>Customer Name</th>
-                <th>Collection</th>
-                <th>Created Date</th>
-                <th>Last Modified</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for table in tables %}
-            <tr>
-                <td><a href="/edit/{{ table.id }}/">{{ table.name }}</a></td>
-                <td>{{ table.factory_name }}</td>
-                <td>{{ table.collection }}</td>
-                <td>{{ table.created_at|date:"Y-m-d H:i" }}</td>
-                <td>{{ table.updated_at|date:"Y-m-d H:i" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">No tables found.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  {% endif %}
+  <div id="tableGrid" class="ag-theme-alpine"></div>
+
+  <!-- Safe Django JSON embedding -->
+  {{ tables|json_script:"table-data" }}
+
+  <!-- AG Grid UMD JS (v29.3.3 is safe & stable) -->
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/dist/ag-grid-community.min.noStyle.js"></script>
+
+  <script>
+    //  Parse table data safely
+    const tableData = JSON.parse(document.getElementById('table-data').textContent);
+
+    //  Define columns
+    const columnDefs = [
+      {
+        headerName: "Table Name",
+        field: "name",
+        cellRenderer: params => `<a href="/edit/${params.data.id}/">${params.value}</a>`
+      },
+      { headerName: "Customer Name", field: "factory_name" },
+      { headerName: "Collection", field: "collection" },
+      { headerName: "Chemical", field: "chemical" },
+      { headerName: "Collection", field: "developer" },
+      { headerName: "Created At", field: "created_at" },
+      { headerName: "Updated At", field: "updated_at" }
+    ];
+
+    const gridOptions = {
+      columnDefs: columnDefs,
+      rowData: tableData,
+      pagination: true,
+      paginationPageSize: 50,
+      defaultColDef: {
+        sortable: true,
+        filter: true,
+        resizable: true,
+      }
+    };
+
+    //  Initialize AG Grid properly
+    document.addEventListener('DOMContentLoaded', function () {
+      const gridDiv = document.querySelector('#tableGrid');
+      new agGrid.Grid(gridDiv, gridOptions);
+    });
+  </script>
 </body>
 </html>

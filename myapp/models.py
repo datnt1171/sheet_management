@@ -1,7 +1,7 @@
 from django.db import models
 
 class Table(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     name_verbose = models.CharField(max_length=255, null=True)
     sheen = models.CharField(max_length=20, null=True)
     dft = models.CharField(max_length=255, null=True)
