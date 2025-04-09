@@ -1,81 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>All Systemsheets</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends 'myapp/base.html' %}
 
-  <!-- AG Grid Styles -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/styles/ag-grid.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/styles/ag-theme-alpine.css">
+{% block title %}All Systemsheets{% endblock %}
 
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 1rem;
+{% block content %}
+<h1 class="text-2xl font-semibold text-gray-800 mb-4">📋 All Systemsheets</h1>
+
+<!-- AG Grid container -->
+<div id="tableGrid" class="ag-theme-alpine" style="height: 600px; width: 100%;"></div>
+
+<!-- Embed JSON safely -->
+{{ tables|json_script:"table-data" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- AG Grid Styles & Scripts -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/styles/ag-theme-alpine.css">
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/dist/ag-grid-community.min.noStyle.js"></script>
+
+<script>
+  const tableData = JSON.parse(document.getElementById('table-data').textContent);
+
+  const columnDefs = [
+    {
+      headerName: "Table Name",
+      field: "name",
+      cellRenderer: params => `<a href="/edit/${params.data.id}/" class="text-blue-600 underline hover:text-blue-800">${params.value}</a>`
+    },
+    { headerName: "Customer Name", field: "factory_name" },
+    { headerName: "Collection", field: "collection" },
+    { headerName: "Chemical", field: "chemical" },
+    { headerName: "Developer", field: "developer" },
+    { headerName: "Created At", field: "created_at" },
+    { headerName: "Updated At", field: "updated_at" }
+  ];
+
+  const gridOptions = {
+    columnDefs,
+    rowData: tableData,
+    pagination: true,
+    paginationPageSize: 50,
+    defaultColDef: {
+      sortable: true,
+      filter: true,
+      resizable: true,
     }
-    #tableGrid {
-      height: 600px;
-      width: 100%;
-    }
-  </style>
-</head>
-<body>
-    {% if user.is_authenticated %}
-      <p>Welcome {{ request.user.username }}</p>
-      <form action="{% url 'logout' %}" method="post" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit">Logout</button>
-    </form>
-    {% endif %}
-  <h1>All Systemsheets</h1>
-  {% if is_crud_user %}
-    <button onclick="location.href='/create/'">Create New Table</button>
-  {% endif %}
-  <div id="tableGrid" class="ag-theme-alpine"></div>
+  };
 
-  <!-- Safe Django JSON embedding -->
-  {{ tables|json_script:"table-data" }}
-
-  <!-- AG Grid UMD JS (v29.3.3 is safe & stable) -->
-  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/dist/ag-grid-community.min.noStyle.js"></script>
-
-  <script>
-    //  Parse table data safely
-    const tableData = JSON.parse(document.getElementById('table-data').textContent);
-
-    //  Define columns
-    const columnDefs = [
-      {
-        headerName: "Table Name",
-        field: "name",
-        cellRenderer: params => `<a href="/edit/${params.data.id}/">${params.value}</a>`
-      },
-      { headerName: "Customer Name", field: "factory_name" },
-      { headerName: "Collection", field: "collection" },
-      { headerName: "Chemical", field: "chemical" },
-      { headerName: "Collection", field: "developer" },
-      { headerName: "Created At", field: "created_at" },
-      { headerName: "Updated At", field: "updated_at" }
-    ];
-
-    const gridOptions = {
-      columnDefs: columnDefs,
-      rowData: tableData,
-      pagination: true,
-      paginationPageSize: 50,
-      defaultColDef: {
-        sortable: true,
-        filter: true,
-        resizable: true,
-      }
-    };
-
-    //  Initialize AG Grid properly
-    document.addEventListener('DOMContentLoaded', function () {
-      const gridDiv = document.querySelector('#tableGrid');
-      new agGrid.Grid(gridDiv, gridOptions);
-    });
-  </script>
-</body>
-</html>
+  document.addEventListener('DOMContentLoaded', function () {
+    const gridDiv = document.querySelector('#tableGrid');
+    new agGrid.Grid(gridDiv, gridOptions);
+  });
+</script>
+{% endblock %}

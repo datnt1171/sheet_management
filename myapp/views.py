@@ -27,16 +27,19 @@ def is_crud_user(user):
 def index(request):
     tables = list(Table.objects.values(
         'id', 'name', 'factory_name', 'collection',
-        'chemical', 'developer',
-        'created_at', 'updated_at'
+        'chemical', 'developer', 'created_at', 'updated_at'
     ))
-    
+
     for table in tables:
         table['created_at'] = table['created_at'].strftime('%Y-%m-%d %H:%M') if table['created_at'] else ''
         table['updated_at'] = table['updated_at'].strftime('%Y-%m-%d %H:%M') if table['updated_at'] else ''
-        
-    is_crud_user = request.user.groups.filter(name='CRUD').exists()
-    return render(request, 'myapp/index.html', {'tables': tables, 'is_crud_user': is_crud_user})
+
+    is_crud_user_flag = is_crud_user(request.user)
+
+    return render(request, 'myapp/index.html', {
+        'tables': tables,
+        'is_crud_user': is_crud_user_flag,
+    })
 
 # Create a new table with a 5x5 empty grid
 @login_required

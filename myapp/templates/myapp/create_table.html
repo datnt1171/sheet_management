@@ -1,21 +1,36 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Table</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Create New Table</h1>
-    <form method="post">
-        {% csrf_token %}
-        <label for="name">Table Name:</label>
-        <input type="text" id="name" name="name" required>
-        <button type="submit">Create</button>
-    </form>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
+    <div class="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center"> Create New Systemsheet</h1>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Sheet Name</label>
+                <input type="text" id="name" name="name" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200">
+                Create Systemsheet
+            </button>
+        </form>
+
+        {% if error %}
+            <p class="mt-4 text-red-600 text-sm text-center">{{ error }}</p>
+        {% endif %}
+    </div>
+
 </body>
 </html>

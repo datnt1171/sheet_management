@@ -1,210 +1,235 @@
+{% extends 'myapp/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Edit Table</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more"></script>
+{% block title %}Edit Table{% endblock %}
+
+{% block content %}
+  {% include 'myapp/metadata.html' %}
+  
+  <div id="print">
+    {% include 'myapp/table_header.html' %}
+    <div id="hot"></div>
+  </div>
+
+  <!-- Floating Action Button Group -->
+  <div class="fab-wrapper">
+    <!-- Main toggle FAB -->
+    <button class="fab-main" id="toggleSidebarBtn" title="Tools">☰</button>
+  
+    <!-- Action buttons (initially hidden, pop up above) -->
+    <div class="fab-actions" id="sidebarActions">
+      <button onclick="saveTable()" class="fab-action" title="Save Table">💾</button>
+      <button onclick="saveTableWithConsumption()" class="fab-action" title="Save with Consumption">📦</button>
+      <button onclick="exportToExcel()" class="fab-action" title="Export to excel">📤</button>
+      <button onclick="captureTable()" class="fab-action" title="Export to PDF">🖨️</button>
+      <button onclick="mergeCells()" class="fab-action" title="Merge">🔀</button>
+      <button onclick="appendFooterRow()" class="fab-action" title="Add footer row">➕</button>
+    </div>
+  </div>
+
+  {% include 'myapp/footer_image.html' %}
+{% endblock %}
+
+{% block extra_scripts %}
+  <!-- External JS + CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more"></script>
+
+  <!-- Custom Static CSS -->
+  <link rel="stylesheet" href="{% static 'hot.css' %}">
+  <link rel="stylesheet" href="{% static 'table_header.css' %}">
+  <link rel="stylesheet" href="{% static 'footer_image.css' %}">
+  <link rel="stylesheet" href="{% static 'sidebar.css' %}">
+
+  <!-- Your big Handsontable logic script -->
+  <script>
+    let hot;
+
+    async function loadProductData() {
+      const response = await fetch('/static/steps.json');
+      const productData = await response.json();
+      initHandsontable(productData);
+    }
+
+    function initHandsontable(productData) {
+      const WidthUnit = 38 / 4.11;
+      const container = document.getElementById('hot');
+      hot = new Handsontable(container, {
+        data: JSON.parse('{{ table_data_json|escapejs }}'),
+        contextMenu: true,
+        minRows: 20,
+        height: 'auto',
+        rowHeights: true,
+        manualRowResize: true,
+        colHeaders: [ 
+          "Step", "Step Name", "Viscosity & Wet Mill Thickness (EN)", "Viscosity & Wet Mill Thickness (VN)", 
+          "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
+          "Material Code", "Material Name", "Ratio", "Qty (per m2)", "Unit", 
+          "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign"
+        ],
+        colWidths: [
+          WidthUnit * 4.2, WidthUnit * 6.89, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, 
+          WidthUnit * 5, WidthUnit * 8.78, WidthUnit * 9.5, WidthUnit * 10.22, WidthUnit * 11.67, 
+          WidthUnit * 4.89, WidthUnit * 4.89, WidthUnit * 4.89, WidthUnit * 12, WidthUnit * 12, 
+          WidthUnit * 6.56, WidthUnit * 8.56
+        ],
+        columns: [
+          { type: 'text' }, 
+          { type: 'dropdown', source: Object.keys(productData), allowEmpty: false }, 
+          { type: 'text' }, { type: 'text' }, { type: 'text' }, { type: 'text' }, 
+          { type: 'numeric' }, { type: 'text' }, { type: 'numeric' }, { type: 'text' }, 
+          { type: 'text' }, { type: 'numeric' }, { type: 'numeric' }, { type: 'text' }, 
+          { type: 'text' }, { type: 'text' }, { type: 'text' }, { type: 'text' }
+        ],
+        mergeCells: [],
+        licenseKey: 'non-commercial-and-evaluation',
+      });
+
+      hot.addHook('afterChange', function(changes) {
+        if (!changes) return;
+
+        changes.forEach(([row, prop, oldVal, newVal]) => {
+          if (prop === 1 && productData[newVal]) {
+            const product = productData[newVal];
+            hot.setDataAtRowProp(row, 2, product.viscosity_en);
+            hot.setDataAtRowProp(row, 3, product.viscosity_vn);
+            hot.setDataAtRowProp(row, 4, product.SPEC_EN);
+            hot.setDataAtRowProp(row, 5, product.SPEC_VN);
+            hot.setDataAtRowProp(row, 6, product.hold_time);
+            hot.setDataAtRowProp(row, 8, product.consumption);
+          }
+        });
+      });
+    }
+
+    loadProductData();
+
+    function saveTable() {
+        const headerData = {
+            name: document.getElementById('table_name').value,
+            name_verbose: document.getElementById('table_name_verbose').value,
+            sheen: document.getElementById('table_sheen').value,
+            dft: document.getElementById('table_dft').value,
+            chemical: document.getElementById('table_chemical').value,
+            substrate: document.getElementById('table_substrate').value,
+            grain_filling: document.getElementById('table_grain_filling').value,
+            developer: document.getElementById('table_developer').value,
+            chemical_waste: document.getElementById('table_chemical_waste').value,
+            conveyor_speed: document.getElementById('table_conveyor_speed').value,
+            factory_name: document.getElementById('table_factory_name').value,
+            collection: document.getElementById('table_collection').value,
+        };
+        console.log(headerData)
+        const tableData = hot.getData();
+
+        fetch(`/api/save/{{ table.id }}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                headerData: headerData,
+                data: tableData
+            })
+        })
+        .then(response => response.json())
+        .then(data => alert(data.message || data.error));
+    }
+
+    function saveTableWithConsumption() {
+        const headerData = {
+            name_verbose: document.getElementById('table_name_verbose').value,
+            sheen: document.getElementById('table_sheen').value,
+            dft: document.getElementById('table_dft').value,
+            chemical: document.getElementById('table_chemical').value,
+            substrate: document.getElementById('table_substrate').value,
+            grain_filling: document.getElementById('table_grain_filling').value,
+            developer: document.getElementById('table_developer').value,
+            chemical_waste: document.getElementById('table_chemical_waste').value,
+            conveyor_speed: document.getElementById('table_conveyor_speed').value,
+            table_factory_name: document.getElementById('table_factory_name').value,
+            table_collection: document.getElementById('table_collection').value,
+        };
         
-        <link rel="stylesheet" href="{% static 'hot.css' %}">
-        <link rel="stylesheet" href="{% static 'table_header.css' %}">
-        <link rel="stylesheet" href="{% static 'footer_image.css' %}">
-    </head>
-    <body>
-        {% include 'myapp/metadata.html' %}
-        <div id="print">
-            {% include 'myapp/table_header.html' %}
-            <div id="hot"></div>
-        </div>
+        const tableData = hot.getData();
         
-        
-        
-
-        <button onclick="mergeCells()">Merge Cells</button>
-        <button onclick="appendFooterRow()">Append Footer Row</button>
-        <button onclick="saveTable()">Save Table</button>
-        <button onclick="saveTableWithConsumption()">Save Table with Consumption</button>
-        <button onclick="exportToExcel()">Export to Excel</button>
-        <button onclick="captureTable()">Print</button>
-        <button onclick="toggleRowIndex()">Toggle</button>
-
-        {% include 'myapp/footer_image.html' %}
-
-        <script>
-            // Dictionary containing product details
-            let hot; // Declare it globally
-
-            async function loadProductData() {
-                const response = await fetch('/static/steps.json');
-                const productData = await response.json();
-                initHandsontable(productData);  // Only initialize Handsontable when data is ready
+        fetch(`/api/save-with-consumption/{{ table.id }}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                headerData: headerData,
+                data: tableData
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Table saved with consumption successfully!');
+                window.location.href = `/edit/${data.new_table_id}/`;
+            } else {
+                alert(data.error || 'Failed to save table with consumption.');
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the table.');
+        });
+    }
 
-            function initHandsontable(productData) {
-                const WidthUnit = 38 / 4.11;
-                const container = document.getElementById('hot');
-                hot = new Handsontable(container, {  // Assign to the global variable
-                    data: JSON.parse('{{ table_data_json|escapejs }}'),
-                    contextMenu: true,
-                    minRows: 20,
-                    rowHeights: true,
-                    height: 'auto',
-                    manualRowResize: true,
-                    colHeaders: [ "Step", "Step Name", "Viscosity & Wet Mill Thickness (EN)", "Viscosity & Wet Mill Thickness (VN)", 
-                                "SPEC EN", "SPEC VN", "Hold Time (min)", "Chemical Mixing Code", "Consumption (per m2)", 
-                                "Material Code","Material Name", "Ratio", "Qty (per m2)", "Unit", 
-                                "Check Result", "Correct Action", "TE-1's Sign", "Customer's Sign" ],
-                    colWidths: [WidthUnit * 4.2, WidthUnit * 6.89, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, WidthUnit * 13, 
-                                WidthUnit * 5, WidthUnit * 8.78, WidthUnit * 9.5, WidthUnit * 10.22, WidthUnit * 11.67, 
-                                WidthUnit * 4.89, WidthUnit * 4.89, WidthUnit * 4.89, WidthUnit * 12, WidthUnit * 12, 
-                                WidthUnit * 6.56, WidthUnit * 8.56],
-                    columns: [
-                        { type: 'text' }, 
-                        { type: 'dropdown', source: Object.keys(productData), allowEmpty: false }, 
-                        { type: 'text'}, { type: 'text'}, { type: 'text'}, { type: 'text'}, 
-                        { type: 'numeric'}, { type: 'text'}, { type: 'numeric'}, { type: 'text' }, 
-                        { type: 'text' }, { type: 'numeric' }, { type: 'numeric' }, { type: 'text' }, 
-                        { type: 'text' }, { type: 'text' }, { type: 'text' }, { type: 'text' }  
-                    ],
-                    mergeCells: [], 
-                    licenseKey: 'non-commercial-and-evaluation',
-                });
+    function appendFooterRow() {
+        const newRowIndex = hot.countRows(); // Get index for the new row
+        hot.alter('insert_row', newRowIndex); // Insert a new row
 
-                hot.addHook('afterChange', function(changes) {
-                if (!changes) return;
+        // Set text for merged cells
+        hot.setDataAtRowProp(newRowIndex, 0, "PREPARED BY : FINISHING SPECIALIST");
+        hot.setDataAtRowProp(newRowIndex, 4, "APPROVED BY: PAINT SUPPLIER");
+        hot.setDataAtRowProp(newRowIndex, 14, "APPROVED BY: FINISHING MANAGER");
 
-                changes.forEach(([row, prop, oldVal, newVal]) => {
-                    if (prop === 1 && productData[newVal]) { // Step Name changed
-                        const product = productData[newVal];
-                        hot.setDataAtRowProp(row, 2, product.viscosity_en);
-                        hot.setDataAtRowProp(row, 3, product.viscosity_vn);
-                        hot.setDataAtRowProp(row, 4, product.SPEC_EN);
-                        hot.setDataAtRowProp(row, 5, product.SPEC_VN);
-                        hot.setDataAtRowProp(row, 6, product.hold_time);
-                        hot.setDataAtRowProp(row, 8, product.consumption);
-                    }
-                });
-            });
-            }
+        // Get current merged cells
+        let existingMerges = hot.getSettings().mergeCells || [];
 
-            // Call the function to fetch data and initialize Handsontable
-            loadProductData();
+        // Add new row merge settings without removing previous ones
+        existingMerges.push(
+            { row: newRowIndex, col: 0, rowspan: 1, colspan: 4 },  // Merge col 0-3
+            { row: newRowIndex, col: 4, rowspan: 1, colspan: 10 }, // Merge col 4-13
+            { row: newRowIndex, col: 14, rowspan: 1, colspan: 4 }  // Merge col 14-17
+        );
 
-            function saveTable() {
-                const headerData = {
-                    name: document.getElementById('table_name').value,
-                    name_verbose: document.getElementById('table_name_verbose').value,
-                    sheen: document.getElementById('table_sheen').value,
-                    dft: document.getElementById('table_dft').value,
-                    chemical: document.getElementById('table_chemical').value,
-                    substrate: document.getElementById('table_substrate').value,
-                    grain_filling: document.getElementById('table_grain_filling').value,
-                    developer: document.getElementById('table_developer').value,
-                    chemical_waste: document.getElementById('table_chemical_waste').value,
-                    conveyor_speed: document.getElementById('table_conveyor_speed').value,
-                    factory_name: document.getElementById('table_factory_name').value,
-                    collection: document.getElementById('table_collection').value,
-                };
-                console.log(headerData)
-                const tableData = hot.getData();
+        // Update Handsontable settings with the merged list
+        hot.updateSettings({ mergeCells: existingMerges });
 
-                fetch(`/api/save/{{ table.id }}/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({
-                        headerData: headerData,
-                        data: tableData
-                    })
-                })
-                .then(response => response.json())
-                .then(data => alert(data.message || data.error));
-            }
+        // Apply class for styling
+        for (let col = 0; col < 18; col++) {
+            hot.setCellMeta(newRowIndex, col, 'className', 'htLastRow');
+        }
 
-            function saveTableWithConsumption() {
-                const headerData = {
-                    name_verbose: document.getElementById('table_name_verbose').value,
-                    sheen: document.getElementById('table_sheen').value,
-                    dft: document.getElementById('table_dft').value,
-                    chemical: document.getElementById('table_chemical').value,
-                    substrate: document.getElementById('table_substrate').value,
-                    grain_filling: document.getElementById('table_grain_filling').value,
-                    developer: document.getElementById('table_developer').value,
-                    chemical_waste: document.getElementById('table_chemical_waste').value,
-                    conveyor_speed: document.getElementById('table_conveyor_speed').value,
-                    table_factory_name: document.getElementById('table_factory_name').value,
-                    table_collection: document.getElementById('table_collection').value,
-                };
-                
-                const tableData = hot.getData();
-                
-                fetch(`/api/save-with-consumption/{{ table.id }}/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({
-                        headerData: headerData,
-                        data: tableData
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Table saved with consumption successfully!');
-                        window.location.href = `/edit/${data.new_table_id}/`;
-                    } else {
-                        alert(data.error || 'Failed to save table with consumption.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while saving the table.');
-                });
-            }
+        hot.render(); // Re-render the table
+    }
+    const fabBtn = document.getElementById('toggleSidebarBtn');
+    const fabWrapper = document.querySelector('.fab-wrapper');
 
-            function appendFooterRow() {
-                const newRowIndex = hot.countRows(); // Get index for the new row
-                hot.alter('insert_row', newRowIndex); // Insert a new row
+    // Toggle the menu when the main FAB is clicked
+    fabBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent this click from triggering the outside listener
+      fabWrapper.classList.toggle('show');
+    });
 
-                // Set text for merged cells
-                hot.setDataAtRowProp(newRowIndex, 0, "PREPARED BY : FINISHING SPECIALIST");
-                hot.setDataAtRowProp(newRowIndex, 4, "APPROVED BY: PAINT SUPPLIER");
-                hot.setDataAtRowProp(newRowIndex, 14, "APPROVED BY: FINISHING MANAGER");
+    // Close the menu when clicking outside
+    document.addEventListener('click', function (event) {
+      if (!fabWrapper.contains(event.target)) {
+        fabWrapper.classList.remove('show');
+      }
+    });
 
-                // Get current merged cells
-                let existingMerges = hot.getSettings().mergeCells || [];
+  </script>
 
-                // Add new row merge settings without removing previous ones
-                existingMerges.push(
-                    { row: newRowIndex, col: 0, rowspan: 1, colspan: 4 },  // Merge col 0-3
-                    { row: newRowIndex, col: 4, rowspan: 1, colspan: 10 }, // Merge col 4-13
-                    { row: newRowIndex, col: 14, rowspan: 1, colspan: 4 }  // Merge col 14-17
-                );
-
-                // Update Handsontable settings with the merged list
-                hot.updateSettings({ mergeCells: existingMerges });
-
-                // Apply class for styling
-                for (let col = 0; col < 18; col++) {
-                    hot.setCellMeta(newRowIndex, col, 'className', 'htLastRow');
-                }
-
-                hot.render(); // Re-render the table
-            }
-
-
-        </script>
-    <!-- JavaScript -->
-    <script src="{% static 'hot_table.js' %}"></script>
-    </body>
-</html>
+  <!-- Your additional logic scripts -->
+  <script src="{% static 'hot_table.js' %}"></script>
+{% endblock %}
