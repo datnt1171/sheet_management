@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +10,7 @@
   <!-- AG Grid styles if needed -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/styles/ag-grid.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.3/styles/ag-theme-alpine.css">
+  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
 
   <!-- Optional minimal CSS framework -->
   <link rel="stylesheet" href="https://unpkg.com/modern-css-reset/dist/reset.min.css" />
@@ -73,7 +76,7 @@
     <div class="nav-right">
       <span>👋 {{ request.user.username }}</span>
       {% if is_crud_user %}
-        <a href="{% url 'create_table' %}" class="button">➕ New Table</a>
+        <a href="{% url 'create_table' %}" class="button">➕ New Sheet</a>
       {% endif %}
       <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
