@@ -117,18 +117,18 @@
 
     function saveTable() {
         const headerData = {
-            name: document.getElementById('table_name').value,
-            name_verbose: document.getElementById('table_name_verbose').value,
-            sheen: document.getElementById('table_sheen').value,
-            dft: document.getElementById('table_dft').value,
-            chemical: document.getElementById('table_chemical').value,
-            substrate: document.getElementById('table_substrate').value,
-            grain_filling: document.getElementById('table_grain_filling').value,
-            developer: document.getElementById('table_developer').value,
-            chemical_waste: document.getElementById('table_chemical_waste').value,
-            conveyor_speed: document.getElementById('table_conveyor_speed').value,
-            factory_name: document.getElementById('table_factory_name').value,
-            collection: document.getElementById('table_collection').value,
+          name: document.getElementById('table_name').value.trim(),
+          name_verbose: document.getElementById('table_name_verbose').value.trim(),
+          sheen: document.getElementById('table_sheen').value.trim(),
+          dft: document.getElementById('table_dft').value.trim(),
+          chemical: document.getElementById('table_chemical').value.trim(),
+          substrate: document.getElementById('table_substrate').value.trim(),
+          grain_filling: document.getElementById('table_grain_filling').value.trim(),
+          developer: document.getElementById('table_developer').value.trim(),
+          chemical_waste: document.getElementById('table_chemical_waste').value.trim(),
+          conveyor_speed: document.getElementById('table_conveyor_speed').value.trim(),
+          factory_name: document.getElementById('table_factory_name').value.trim(),
+          collection: document.getElementById('table_collection').value.trim(),
         };
         console.log(headerData)
         const tableData = hot.getData();
@@ -150,17 +150,18 @@
 
     function saveTableWithConsumption() {
         const headerData = {
-            name_verbose: document.getElementById('table_name_verbose').value,
-            sheen: document.getElementById('table_sheen').value,
-            dft: document.getElementById('table_dft').value,
-            chemical: document.getElementById('table_chemical').value,
-            substrate: document.getElementById('table_substrate').value,
-            grain_filling: document.getElementById('table_grain_filling').value,
-            developer: document.getElementById('table_developer').value,
-            chemical_waste: document.getElementById('table_chemical_waste').value,
-            conveyor_speed: document.getElementById('table_conveyor_speed').value,
-            table_factory_name: document.getElementById('table_factory_name').value,
-            table_collection: document.getElementById('table_collection').value,
+          name: document.getElementById('table_name').value.trim(),
+          name_verbose: document.getElementById('table_name_verbose').value.trim(),
+          sheen: document.getElementById('table_sheen').value.trim(),
+          dft: document.getElementById('table_dft').value.trim(),
+          chemical: document.getElementById('table_chemical').value.trim(),
+          substrate: document.getElementById('table_substrate').value.trim(),
+          grain_filling: document.getElementById('table_grain_filling').value.trim(),
+          developer: document.getElementById('table_developer').value.trim(),
+          chemical_waste: document.getElementById('table_chemical_waste').value.trim(),
+          conveyor_speed: document.getElementById('table_conveyor_speed').value.trim(),
+          factory_name: document.getElementById('table_factory_name').value.trim(),
+          collection: document.getElementById('table_collection').value.trim(),
         };
         
         const tableData = hot.getData();

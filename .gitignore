@@ -157,3 +157,4 @@ backup/
 *.ipynb
 db/
 *.xlsx
+media/
